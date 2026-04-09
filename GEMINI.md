@@ -6,8 +6,9 @@
 ### 1. Anti-AI Filter Web
 - **Description:** React + FastAPI 기반 AI 보호 웹 서비스.
 - **Key Tech:** PGD(Projected Gradient Descent) 기반 스텔스 적대적 필터, Grad-CAM 히트맵 시각화.
-- **Current Status:** Hugging Face Spaces 빌드 오류(exit code 100) 해결을 위해 Dockerfile 최적화 완료 및 푸시됨. 최종 배포 확인 단계.
-- **Next Step:** Hugging Face 빌드 성공 여부 확인 후 Vercel 프론트엔드와 연결 테스트.
+- **Current Status:** [성공] Hugging Face Space(Docker) 빌드 완료 및 "Running" 상태. Vercel 연결 준비 완료.
+- **Backend (HF):** `https://huggingface.co/spaces/onyeonwoo/Anti_AI_Filter`
+- **Next Step:** Vercel 환경 변수(`REACT_APP_API_URL`) 설정 후 프론트엔드 배포 확인.
 
 ### 2. Filter Optimizer Pipeline
 - **Description:** 에이전트 자동화 루프를 통한 필터 성능 최적화 도구.
