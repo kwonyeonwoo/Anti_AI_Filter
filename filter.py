@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet50, resnet18, ResNet50_Weights, ResNet18_Weights
 import numpy as np
 from PIL import Image
 import io
@@ -12,113 +12,102 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 def apply_protection_filter(image_bytes: bytes, intensity: float = 1.0) -> bytes:
     """
-    PRECISION STEALTH-MAX FILTER (V6.0)
-    Target: Image Fidelity 96/100 + AI Disruption 100%
-    1. Surgical Semantic Attack (60 Iterations)
-    2. Adaptive JND Masking (Flat-area suppression)
-    3. High-Fidelity Constraint (Eps = 8/255)
+    SELF-VERIFYING GUARD (V7.0)
+    1. Generate Noise (Surgical Attack)
+    2. Verify with Secondary AI (Learning Resistance Test)
+    3. Loop & Retry if learning is still possible.
     """
-    try:
-        # Load Model
-        weights = ResNet50_Weights.DEFAULT
-        model = resnet50(weights=weights).eval()
-        preprocess = weights.transforms()
+    # Load Models
+    weights_adv = ResNet50_Weights.DEFAULT
+    model_adv = resnet50(weights=weights_adv).eval()
+    
+    # Load Verifier Model (Different architecture to ensure robustness)
+    weights_ver = ResNet18_Weights.DEFAULT
+    model_ver = resnet18(weights=weights_ver).eval()
+    
+    preprocess = weights_adv.transforms()
+    
+    img_pil = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    orig_w, orig_h = img_pil.size
+    input_tensor = preprocess(img_pil).unsqueeze(0)
+    
+    # Pre-calculate original features for verification
+    with torch.no_grad():
+        orig_ver_feat = model_ver(input_tensor)
+
+    max_retries = 3
+    current_attempt = 0
+    best_result_bytes = image_bytes
+    
+    # Adaptive Params that change on retry
+    eps_limit = 10 / 255 
+    alpha = 1.2 / 255
+    
+    while current_attempt < max_retries:
+        current_attempt += 1
+        print(f"--- Filter Attempt {current_attempt} ---")
         
-        # Image Preparation
-        img_pil = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-        orig_w, orig_h = img_pil.size
-        input_tensor = preprocess(img_pil).unsqueeze(0)
-        
-        # --- Step 1: Precision Human Visual System Masking ---
-        img_np = np.array(img_pil)
-        gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY).astype(np.float32)
-        
-        # Sobel for high-frequency awareness
-        sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-        sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-        edge_mag = np.sqrt(sobelx**2 + sobely**2)
-        
-        # Advanced JND: Suppress noise in flat areas (low variance)
-        texture_mask = cv2.GaussianBlur(edge_mag, (9, 9), 0)
-        texture_mask = (texture_mask - texture_mask.min()) / (texture_mask.max() + 1e-6)
-        
-        # Power Curve: Harshly suppress noise in smooth areas (96/100 goal)
-        p_mask = np.power(texture_mask, 0.7) 
-        p_mask = np.clip(p_mask, 0.05, 1.0) # Very low noise in flat areas
-        p_mask_tensor = torch.from_numpy(cv2.resize(p_mask, (224, 224))).unsqueeze(0).unsqueeze(0)
-        
-        # --- Step 2: Surgical Semantic Optimization ---
-        iters = 60 # More iterations for surgical precision
-        eps_limit = 8 / 255 # Strict limit for 96/100 fidelity
-        alpha = 1.0 / 255
-        
+        # 1. Generate Noisy Image
         adv_tensor = input_tensor.clone().detach().requires_grad_(True)
-        
-        # Target Deep Semantic layers
-        target_layers = [model.layer3[-1], model.layer4[-1]]
+        target_layer = model_adv.layer4[-1] # Deep semantic target
         features = []
-        def get_hook():
-            def hook(module, input, output):
-                features.append(output)
-            return hook
-        handles = [l.register_forward_hook(get_hook()) for l in target_layers]
+        def hook(m, i, o): features.append(o)
+        handle = target_layer.register_forward_hook(hook)
         
-        # Get Original features
-        model(input_tensor)
-        orig_feats = [f.detach() for f in features]
+        model_adv(input_tensor)
+        orig_feat = features[0].detach()
         features.clear()
         
-        for _ in range(iters):
-            # EoT: Make noise robust to compression
-            curr_input = adv_tensor
-            if np.random.rand() > 0.5:
-                curr_input = F.avg_pool2d(adv_tensor, kernel_size=3, stride=1, padding=1)
-            
-            model.zero_grad()
-            model(curr_input)
-            
-            # Semantic Poisoning Loss: Maximize feature distance
-            loss = 0
-            for i in range(len(features)):
-                loss -= F.mse_loss(features[i], orig_feats[i])
-            
+        # Optimization Loop
+        for _ in range(40 + (current_attempt * 10)):
+            model_adv(adv_tensor)
+            loss = -F.mse_loss(features[0], orig_feat)
             loss.backward()
             features.clear()
             
             with torch.no_grad():
+                # On retries, we shift the noise pattern randomly
+                noise_shift = torch.randn_like(adv_tensor) * 0.001 * current_attempt
                 grad = adv_tensor.grad.sign()
-                # Apply surgical noise through mask
-                adv_tensor = adv_tensor + (alpha * grad * p_mask_tensor)
-                
-                # Dynamic Constraint: Stealth ball
-                curr_eps = eps_limit * p_mask_tensor
-                delta = torch.clamp(adv_tensor - input_tensor, min=-curr_eps, max=curr_eps)
+                adv_tensor = adv_tensor + (alpha * grad) + noise_shift
+                delta = torch.clamp(adv_tensor - input_tensor, min=-eps_limit, max=eps_limit)
                 adv_tensor = torch.clamp(input_tensor + delta, min=0, max=1)
                 adv_tensor.requires_grad = True
         
-        for h in handles:
-            h.remove()
+        handle.remove()
+        
+        # 2. VERIFICATION STEP: Can a different AI still "learn" this?
+        with torch.no_grad():
+            prot_ver_feat = model_ver(adv_tensor)
+            # Calculate Similarity (How much "Style/Identity" survived)
+            similarity = F.cosine_similarity(orig_ver_feat.flatten(), prot_ver_feat.flatten(), dim=0).item()
+            print(f"AI Learning Similarity Score: {similarity:.4f} (Lower is better)")
             
-        # --- Step 3: High-Fidelity Reconstruction ---
-        adv_np = adv_tensor.squeeze(0).detach().permute(1, 2, 0).cpu().numpy()
-        adv_img_np = (adv_np * 255).astype(np.uint8)
-        final_img = cv2.resize(adv_img_np, (orig_w, orig_h))
-        
-        # Optional: Subtle Post-smoothing only in sensitive areas
-        final_lab = cv2.cvtColor(final_img, cv2.COLOR_RGB2LAB).astype(np.float32)
-        orig_lab = cv2.cvtColor(img_np, cv2.COLOR_RGB2LAB).astype(np.float32)
-        
-        # Ensure L (Luminance) stays extremely close to original in flat areas
-        p_mask_full = cv2.resize(p_mask, (orig_w, orig_h))
-        final_lab[:,:,0] = orig_lab[:,:,0] * (1 - p_mask_full * 0.2) + final_lab[:,:,0] * (p_mask_full * 0.2)
-        
-        res_img = cv2.cvtColor(np.clip(final_lab, 0, 255).astype(np.uint8), cv2.COLOR_LAB2RGB)
-        
-        res_pil = Image.fromarray(res_img)
-        img_byte_arr = io.BytesIO()
-        res_pil.save(img_byte_arr, format='PNG', optimize=True)
-        return img_byte_arr.getvalue()
-        
-    except Exception as e:
-        print(f"V6 Error: {e}")
-        return image_bytes
+        # 3. DECISION
+        # If similarity < 0.75, the AI is sufficiently confused (Learning Failed)
+        if similarity < 0.75:
+            print("✅ SUCCESS: AI Learning Blocked.")
+            adv_np = adv_tensor.squeeze(0).detach().permute(1, 2, 0).cpu().numpy()
+            adv_img_np = (adv_np * 255).astype(np.uint8)
+            final_img = cv2.resize(adv_img_np, (orig_w, orig_h))
+            
+            res_pil = Image.fromarray(final_img)
+            img_byte_arr = io.BytesIO()
+            res_pil.save(img_byte_arr, format='PNG', optimize=True)
+            return img_byte_arr.getvalue()
+        else:
+            print("❌ FAIL: AI still recognizes the style. Retrying with stronger attack...")
+            # Increase power for next attempt
+            eps_limit += 4 / 255
+            alpha += 0.5 / 255
+            
+            # Save the current best as a fallback
+            adv_np = adv_tensor.squeeze(0).detach().permute(1, 2, 0).cpu().numpy()
+            best_result_bytes = cv2.resize((adv_np * 255).astype(np.uint8), (orig_w, orig_h))
+
+    # If all retries fail, return the strongest one we found
+    print("⚠️ Max retries reached. Outputting strongest protection found.")
+    res_pil = Image.fromarray(best_result_bytes)
+    img_byte_arr = io.BytesIO()
+    res_pil.save(img_byte_arr, format='PNG', optimize=True)
+    return img_byte_arr.getvalue()
