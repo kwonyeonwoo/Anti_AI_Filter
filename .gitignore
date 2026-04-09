@@ -1,0 +1,19 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+env/
+venv/
+.env
+feedback.json
+
+# Node
+node_modules/
+dist/
+build/
+.eslintcache
+
+# Project specific
+tmp/
+automated_result.py
