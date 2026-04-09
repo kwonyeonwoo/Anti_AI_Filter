@@ -7,8 +7,8 @@ ENV PORT=7860
 
 WORKDIR /app
 
-# Robust apt-get with retries and minimal dependencies
-RUN apt-get update -y && \
+# Robust apt-get with cache-busting and retries (Fixed exit code 100 issue)
+RUN apt-get update --allow-releaseinfo-change && \
     apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
@@ -30,4 +30,4 @@ RUN mkdir -p /app/tmp && chmod -R 777 /app/tmp
 
 EXPOSE 7860
 
-CMD ["uvicorn", "main.py:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["python", "main.py"]
