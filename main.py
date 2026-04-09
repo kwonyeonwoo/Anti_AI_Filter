@@ -85,7 +85,7 @@ async def protect_image(file: UploadFile = File(...), intensity: float = Form(0.
 
 @app.get("/")
 def read_root():
-    return {"message": "AI-Guard Robust API v7.0 (Self-Verifying Guard) is running on Hugging Face!"}
+    return {"message": "AI-Guard Robust API v8.0 (High-Fidelity Guard) is running on Hugging Face!"}
 
 if __name__ == "__main__":
     import uvicorn
