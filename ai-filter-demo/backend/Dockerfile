@@ -7,12 +7,12 @@ ENV PORT=7860
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    libgl1 \
     libglib2.0-0 \
-    build-essential \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
