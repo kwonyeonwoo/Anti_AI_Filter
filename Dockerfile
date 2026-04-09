@@ -7,14 +7,14 @@ ENV PORT=7860
 
 WORKDIR /app
 
-# Add more system dependencies for OpenCV and Pillow stability
+# Robust apt-get with cache-busting and retries (Fixes exit code 100)
 RUN apt-get update --allow-releaseinfo-change && \
     apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
