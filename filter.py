@@ -44,9 +44,9 @@ def apply_protection_filter(image_bytes: bytes, intensity: float = 0.5) -> bytes
         
         # Iterative Optimization: Find noise that maximizes feature distance
         # but minimizes visual change.
-        iters = 6
-        eps = (6 / 255) * intensity # Max pixel change (Strict limit for invisibility)
-        alpha = 1.5 / 255
+        iters = 12
+        eps = (15 / 255) * intensity # Increased Max pixel change
+        alpha = 2.0 / 255
         
         adv_tensor = input_tensor.clone().detach().requires_grad_(True)
         
@@ -82,18 +82,17 @@ def apply_protection_filter(image_bytes: bytes, intensity: float = 0.5) -> bytes
         orig_lab = cv2.cvtColor(orig_np, cv2.COLOR_RGB2LAB).astype(np.float32)
         adv_lab = cv2.cvtColor(adv_img_np, cv2.COLOR_RGB2LAB).astype(np.float32)
         
-        # Masking: Only apply noise where AI is most sensitive (Edge/Texture)
-        gray = orig_np.mean(axis=2)
-        edges = cv2.Canny(gray.astype(np.uint8), 100, 200)
-        mask = cv2.GaussianBlur(edges.astype(np.float32), (5, 5), 0) / 255.0
+        # Masking: Apply noise more broadly on features/textures
+        gray = cv2.cvtColor(orig_np, cv2.COLOR_RGB2GRAY)
+        edges = cv2.Canny(gray, 50, 150) # Lower thresholds for more coverage
+        mask = cv2.GaussianBlur(edges.astype(np.float32), (7, 7), 0) / 255.0
         mask = np.expand_dims(mask, axis=2)
         
-        # Keep original L (Luminance) mostly intact for sharpness
-        # Blend Color channels heavily
+        # Increase blending weights for better protection
         final_lab = orig_lab.copy()
-        final_lab[:,:,1:3] = orig_lab[:,:,1:3] * (1 - mask * 0.7) + adv_lab[:,:,1:3] * (mask * 0.7)
-        # Very tiny jitter to L only in high texture areas
-        final_lab[:,:,0] = orig_lab[:,:,0] * (1 - mask * 0.1) + adv_lab[:,:,0] * (mask * 0.1)
+        final_lab[:,:,1:3] = orig_lab[:,:,1:3] * (1 - mask * 0.9) + adv_lab[:,:,1:3] * (mask * 0.9)
+        # More jitter to L (Luminance) for stronger AI confusion
+        final_lab[:,:,0] = orig_lab[:,:,0] * (1 - mask * 0.35) + adv_lab[:,:,0] * (mask * 0.35)
         
         final_np = cv2.cvtColor(np.clip(final_lab, 0, 255).astype(np.uint8), cv2.COLOR_LAB2RGB)
         
