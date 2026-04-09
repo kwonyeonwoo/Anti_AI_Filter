@@ -31,8 +31,12 @@ function App() {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('intensity', intensity.toString());
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    let API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    // Ensure no trailing slash
+    API_URL = API_URL.replace(/\/$/, "");
+    
     try {
+      console.log(`Attempting to connect to: ${API_URL}/protect`);
       const response = await fetch(`${API_URL}/protect`, { method: 'POST', body: formData });
       const data = await response.json();
       setProtectedPreview(data.image);
