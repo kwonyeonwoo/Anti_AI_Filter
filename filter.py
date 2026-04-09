@@ -12,10 +12,10 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 def apply_protection_filter(image_bytes: bytes, intensity: float = 1.0) -> bytes:
     """
-    STEALTH-ROBUST HYBRID FILTER (V4.0)
-    1. Targeted Feature Attack (AI-Guided)
-    2. Perceptual Masking (Invisible to Humans)
-    3. Compression-Resistant Optimization (EoT)
+    DEEP-FEATURE DISRUPTION FILTER (V5.0)
+    1. Multi-Layer Semantic Attack (Layer 3 & 4)
+    2. Luminance-Aware JND Masking
+    3. Advanced EoT for Compression Resistance
     """
     try:
         # Load Model
@@ -28,92 +28,92 @@ def apply_protection_filter(image_bytes: bytes, intensity: float = 1.0) -> bytes
         orig_w, orig_h = img_pil.size
         input_tensor = preprocess(img_pil).unsqueeze(0)
         
-        # --- Step 1 & 2: Generate Perceptual Mask (HVS based) ---
-        # Find high-texture areas to hide noise better
+        # --- Step 1: Intelligent Masking (Human Visual System) ---
         img_np = np.array(img_pil)
-        gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+        gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY).astype(np.float32)
         
-        # Texture complexity map using local variance
-        # Areas with high variance can hide more noise
-        local_std = cv2.GaussianBlur(gray.astype(np.float32)**2, (7,7), 0) - \
-                    cv2.GaussianBlur(gray.astype(np.float32), (7,7), 0)**2
-        local_std = np.sqrt(np.maximum(local_std, 0))
+        # Texture Mask (Variance)
+        local_var = cv2.GaussianBlur(gray**2, (7,7), 0) - cv2.GaussianBlur(gray, (7,7), 0)**2
+        texture_mask = np.sqrt(np.maximum(local_var, 0))
         
-        # Normalize mask (0.2 to 1.0 range to ensure at least some noise everywhere)
-        p_mask = (local_std - local_std.min()) / (local_std.max() - local_std.min() + 1e-6)
-        p_mask = np.clip(p_mask * 1.5, 0.2, 1.0)
-        p_mask_tensor = torch.from_numpy(cv2.resize(p_mask, (224, 224))).unsqueeze(0).unsqueeze(0)
+        # Luminance Mask (People see noise less in very dark/bright areas)
+        lum_mask = np.exp(-((gray - 128)**2) / (2 * 64**2)) # Bell curve centered at 128
+        lum_mask = 1.0 - (lum_mask * 0.5) # Boost noise in dark/bright
         
-        # --- Step 3: Compression-Resistant Optimization (EoT) ---
-        iters = 25
-        eps_base = 12 / 255 # Base epsilon
-        alpha = 1.5 / 255
+        # Combined Perceptual Mask
+        combined_mask = (texture_mask / (texture_mask.max() + 1e-6)) * lum_mask
+        combined_mask = np.clip(combined_mask * 2.0, 0.3, 1.2) # Minimum 30% noise power everywhere
+        p_mask_tensor = torch.from_numpy(cv2.resize(combined_mask, (224, 224))).unsqueeze(0).unsqueeze(0)
+        
+        # --- Step 2: Multi-Layer Semantic Optimization ---
+        iters = 30
+        eps_base = 16 / 255 # Increased base power
+        alpha = 2.0 / 255
         
         adv_tensor = input_tensor.clone().detach().requires_grad_(True)
         
-        # Target Mid-to-Deep Layers for Style/Feature protection
-        target_layer = model.layer3[-1]
+        # Target Mid (Style) and Deep (Content) layers
+        target_layers = [model.layer3[-1], model.layer4[-1]]
         features = []
-        def hook(module, input, output):
-            features.append(output)
-        handle = target_layer.register_forward_hook(hook)
+        def get_hook():
+            def hook(module, input, output):
+                features.append(output)
+            return hook
         
+        handles = [l.register_forward_hook(get_hook()) for l in target_layers]
+        
+        # Get Original features
         model(input_tensor)
-        orig_feat = features[0].detach()
+        orig_feats = [f.detach() for f in features]
         features.clear()
         
         for _ in range(iters):
-            # EoT: Randomly apply small jitter/blur to make noise robust to compression
-            # This simulates what happens during JPEG/PNG encoding
-            noise_input = adv_tensor
-            if np.random.rand() > 0.5:
-                noise_input = F.avg_pool2d(adv_tensor, kernel_size=3, stride=1, padding=1)
+            # Advanced EoT: Simulate multiple image degradations
+            curr_input = adv_tensor
+            rand_val = np.random.rand()
+            if rand_val > 0.7:
+                # Simulate downsampling
+                curr_input = F.interpolate(F.interpolate(adv_tensor, scale_factor=0.8), size=(224,224))
+            elif rand_val > 0.4:
+                # Simulate blurring
+                curr_input = F.avg_pool2d(adv_tensor, kernel_size=3, stride=1, padding=1)
             
             model.zero_grad()
-            model(noise_input)
-            adv_feat = features[0]
+            model(curr_input)
             
-            # Loss: Distance in feature space
-            loss = -F.mse_loss(adv_feat, orig_feat)
+            loss = 0
+            for i in range(len(features)):
+                loss -= F.mse_loss(features[i], orig_feats[i])
+            
             loss.backward()
             features.clear()
             
             with torch.no_grad():
                 grad = adv_tensor.grad.sign()
-                # Apply noise adjusted by Perceptual Mask
-                # This ensures noise is strong in textures, but weak in smooth areas
+                # Apply noise through perceptual mask
                 adv_tensor = adv_tensor + (alpha * grad * p_mask_tensor)
                 
-                # Dynamic Epsilon ball based on texture
+                # Dynamic Epsilon ball
                 curr_eps = eps_base * p_mask_tensor
                 delta = torch.clamp(adv_tensor - input_tensor, min=-curr_eps, max=curr_eps)
                 adv_tensor = torch.clamp(input_tensor + delta, min=0, max=1)
                 adv_tensor.requires_grad = True
         
-        handle.remove()
-        
-        # --- Final Blending & Post-Processing ---
+        for h in handles:
+            h.remove()
+            
+        # --- Step 3: Reconstruction with zero dilution ---
         adv_np = adv_tensor.squeeze(0).detach().permute(1, 2, 0).cpu().numpy()
         adv_img_np = (adv_np * 255).astype(np.uint8)
-        adv_img_np = cv2.resize(adv_img_np, (orig_w, orig_h))
+        final_img = cv2.resize(adv_img_np, (orig_w, orig_h))
         
-        # Frequency domain blending (keep low frequencies of original, high for adv)
-        # This further helps in surviving compression while being invisible
-        final_img = adv_img_np.astype(np.float32)
-        
-        # Soft-blend based on texture mask to ensure high-fidelity in smooth areas
-        p_mask_full = cv2.resize(p_mask, (orig_w, orig_h))
-        p_mask_full = np.expand_dims(p_mask_full, axis=2)
-        
-        # High texture areas get more adversarial noise, smooth areas stay original
-        final_np = img_np * (1 - p_mask_full * 0.4) + final_img * (p_mask_full * 0.4)
-        
-        # Save with high quality to preserve the carefully crafted noise
-        res_pil = Image.fromarray(np.clip(final_np, 0, 255).astype(np.uint8))
+        # No more weighted blending with original! Use the optimized result directly.
+        # This preserves 100% of the adversarial power while epsilon ensures quality.
+        res_pil = Image.fromarray(final_img)
         img_byte_arr = io.BytesIO()
         res_pil.save(img_byte_arr, format='PNG', optimize=True)
         return img_byte_arr.getvalue()
         
     except Exception as e:
-        print(f"V4 Error: {e}")
+        print(f"V5 Error: {e}")
         return image_bytes
