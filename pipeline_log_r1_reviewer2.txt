@@ -1,4 +1,106 @@
 {
-  "score": 100,
-  "feedback": "7개 테이블의 통합 구조가 매우 우수하며, Interactions 테이블의 다형성 처리(type 컬럼)와 Schedules 테이블의 개인/그룹 통합(group_id null 허용) 설계가 확장성(Scalability)과 논리적 완결성(Logical Completeness) 측면에서 완벽합니다. 또한 Soft delete 적용 및 인덱싱 설계가 훌륭합니다."
+  "session_id": "1a639806-085f-4bfa-b69d-ed3475d28555",
+  "response": "```json\n{\n  \"score\": 100,\n  \"feedback\": \"7개 테이블의 통합 구조가 매우 우수하며, Interactions 테이블의 다형성 처리(type 컬럼)와 Schedules 테이블의 개인/그룹 통합(group_id null 허용) 설계가 확장성(Scalability)과 논리적 완결성(Logical Completeness) 측면에서 완벽합니다. 또한 Soft delete 적용 및 인덱싱 설계가 훌륭합니다.\"\n}\n```",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 10,
+          "totalErrors": 0,
+          "totalLatencyMs": 86405
+        },
+        "tokens": {
+          "input": 34843,
+          "prompt": 98700,
+          "candidates": 494,
+          "total": 103333,
+          "cached": 63857,
+          "thoughts": 4139,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 10,
+            "totalErrors": 0,
+            "totalLatencyMs": 86405,
+            "tokens": {
+              "input": 34843,
+              "prompt": 98700,
+              "candidates": 494,
+              "total": 103333,
+              "cached": 63857,
+              "thoughts": 4139,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 10,
+      "totalSuccess": 10,
+      "totalFail": 0,
+      "totalDurationMs": 39911,
+      "totalDecisions": {
+        "accept": 10,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {
+        "read_file": {
+          "count": 2,
+          "success": 2,
+          "fail": 0,
+          "durationMs": 2390,
+          "decisions": {
+            "accept": 2,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "run_shell_command": {
+          "count": 6,
+          "success": 6,
+          "fail": 0,
+          "durationMs": 37472,
+          "decisions": {
+            "accept": 6,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "glob": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 22,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "write_file": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 27,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        }
+      }
+    },
+    "files": {
+      "totalLinesAdded": 4,
+      "totalLinesRemoved": 0
+    }
+  }
 }
