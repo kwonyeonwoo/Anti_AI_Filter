@@ -1,0 +1,94 @@
+{
+  "session_id": "bf91218e-d8ed-4a73-8785-3d62c885d4d9",
+  "response": "```json\n{\n  \"score\": 95,\n  \"feedback\": \"제시된 7개 테이블의 통합 ERD는 3정규형(3NF)까지 잘 준수하여 데이터 중복을 최소화했으며, 적절한 외래키와 제약조건으로 데이터 무결성을 높였습니다. 특히 좋아요, 댓글, 오답노트를 'Interactions' 테이블 하나로 통합한 구조는 테이블 조인을 줄이고 시스템 확장을 유연하게 만들어 확장성(Scalability) 측면에서 매우 우수한 설계입니다. 전반적인 논리적 완결성이 뛰어납니다.\"\n}\n```",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 5,
+          "totalErrors": 0,
+          "totalLatencyMs": 86652
+        },
+        "tokens": {
+          "input": 38885,
+          "prompt": 53059,
+          "candidates": 367,
+          "total": 56234,
+          "cached": 14174,
+          "thoughts": 2808,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 5,
+            "totalErrors": 0,
+            "totalLatencyMs": 86652,
+            "tokens": {
+              "input": 38885,
+              "prompt": 53059,
+              "candidates": 367,
+              "total": 56234,
+              "cached": 14174,
+              "thoughts": 2808,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 4,
+      "totalSuccess": 4,
+      "totalFail": 0,
+      "totalDurationMs": 11147,
+      "totalDecisions": {
+        "accept": 4,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {
+        "read_file": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 39,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "run_shell_command": {
+          "count": 2,
+          "success": 2,
+          "fail": 0,
+          "durationMs": 11088,
+          "decisions": {
+            "accept": 2,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "write_file": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 20,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        }
+      }
+    },
+    "files": {
+      "totalLinesAdded": 4,
+      "totalLinesRemoved": 0
+    }
+  }
+}

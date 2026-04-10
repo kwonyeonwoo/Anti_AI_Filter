@@ -1,0 +1,82 @@
+{
+  "session_id": "fc6a3e85-9888-4f5b-9581-d51ef35da4a0",
+  "response": "```json\n{\n  \"score\": 100,\n  \"feedback\": \"7개 테이블 구조가 성공적으로 구현되었습니다. 특히 Likes, Comments, Notes 등 다양한 상호작용이 하나의 `interactions` 테이블로 통합(`type` 활용)되어 Join 연산을 대폭 줄이고 API 개발 효율성을 극대화한 점이 훌륭합니다. `parent_id`를 활용한 대댓글 계층 구조 지원과, 모든 주요 테이블에 `deleted_at`을 추가하여 Soft Delete 기반의 데이터 유지보수성을 확보한 점 등 확장성 및 실제 서비스 운영까지 고려된 완벽한 설계입니다.\"\n}\n```\n\n요청하신 대로 `ERD_DBML_Code.txt`에 최종 7개 테이블 모델의 DBML 코드를 성공적으로 반영하였으며, `git add/commit/push` 작업을 통해 실시간 동기화(Commit 메시지: \"Update ERD_DBML_Code.txt to final 7-table integrated model\")까지 모두 완료했습니다.",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 4,
+          "totalErrors": 0,
+          "totalLatencyMs": 62828
+        },
+        "tokens": {
+          "input": 35102,
+          "prompt": 44332,
+          "candidates": 1513,
+          "total": 47933,
+          "cached": 9230,
+          "thoughts": 2088,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 4,
+            "totalErrors": 0,
+            "totalLatencyMs": 62828,
+            "tokens": {
+              "input": 35102,
+              "prompt": 44332,
+              "candidates": 1513,
+              "total": 47933,
+              "cached": 9230,
+              "thoughts": 2088,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 4,
+      "totalSuccess": 4,
+      "totalFail": 0,
+      "totalDurationMs": 18307,
+      "totalDecisions": {
+        "accept": 4,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {
+        "run_shell_command": {
+          "count": 3,
+          "success": 3,
+          "fail": 0,
+          "durationMs": 16182,
+          "decisions": {
+            "accept": 3,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "write_file": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 2125,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        }
+      }
+    },
+    "files": {
+      "totalLinesAdded": 99,
+      "totalLinesRemoved": 99
+    }
+  }
+}
