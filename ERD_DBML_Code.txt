@@ -42,6 +42,9 @@ Table interactions {
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   deleted_at timestamp [note: 'Soft delete??]
+  indexes {
+    (material_id, type) [note: 'Optimize filtering']
+  }
 }
 
 // [4] ???????? (Groups)
@@ -81,6 +84,9 @@ Table chats {
   message_type varchar [default: 'TEXT', note: 'TEXT, IMAGE, FILE ??????? ???']
   sent_at timestamp [default: `now()`]
   deleted_at timestamp [note: '????? ??? ?????(Soft delete)']
+  indexes {
+    (group_id, sent_at) [note: 'Optimize pagination']
+  }
 }
 
 // [7] ??? ????? ??? (Schedules)
