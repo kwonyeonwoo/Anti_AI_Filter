@@ -1,0 +1,82 @@
+{
+  "session_id": "7331d806-d833-4023-815c-47368349aa7f",
+  "response": "```json\n{\n  \"score\": 95,\n  \"feedback\": \"7개 테이블로 구성된 통합 ERD 구조는 확장성(Scalability)과 논리적 완결성(Logical Completeness) 측면에서 매우 뛰어납니다. 특히 `Interactions` 테이블을 도입하여 COMMENT, NOTE, LIKE 타입에 대한 처리를 통합함으로써 데이터 관리의 효율성을 높인 점이 인상적입니다. 또한, `Schedules` 테이블에서 `group_id`의 null 허용을 통해 개인 일정과 그룹 일정을 하나의 테이블로 유연하게 수용한 설계도 실무 활용도가 높습니다. 향후 데이터 이력 관리 및 복원을 위해 `users`와 `chats` 테이블 등에 적용된 Soft Delete(deleted_at) 기능 역시 데이터베이스의 신뢰성을 높여주는 좋은 접근입니다.\"\n}\n```\n\nGit 커밋 및 푸시 작업도 정상적으로 완료되었습니다. (`Add pipeline script and logs for optimized 7-table ERD generation` 메시지로 Github `main` 브랜치에 반영되었습니다.)",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 4,
+          "totalErrors": 0,
+          "totalLatencyMs": 37587
+        },
+        "tokens": {
+          "input": 32194,
+          "prompt": 37751,
+          "candidates": 360,
+          "total": 39729,
+          "cached": 5557,
+          "thoughts": 1618,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 4,
+            "totalErrors": 0,
+            "totalLatencyMs": 37587,
+            "tokens": {
+              "input": 32194,
+              "prompt": 37751,
+              "candidates": 360,
+              "total": 39729,
+              "cached": 5557,
+              "thoughts": 1618,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 4,
+      "totalSuccess": 4,
+      "totalFail": 0,
+      "totalDurationMs": 18097,
+      "totalDecisions": {
+        "accept": 4,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {
+        "read_file": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 2291,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "run_shell_command": {
+          "count": 3,
+          "success": 3,
+          "fail": 0,
+          "durationMs": 15806,
+          "decisions": {
+            "accept": 3,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        }
+      }
+    },
+    "files": {
+      "totalLinesAdded": 0,
+      "totalLinesRemoved": 0
+    }
+  }
+}

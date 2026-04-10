@@ -27,6 +27,7 @@ Table materials {
   status varchar [default: 'PUBLISHED', note: 'DRAFT, PUBLISHED, ARCHIVED']
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete용']
 }
 
 // [3] 통합 상호작용 (Interactions)
@@ -40,6 +41,7 @@ Table interactions {
   is_public boolean [default: true, note: '오답노트 공개 여부']
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete용']
 }
 
 // [4] 스터디 그룹 (Groups)
@@ -53,6 +55,7 @@ Table groups {
   status varchar [default: 'ACTIVE', note: 'ACTIVE, CLOSED']
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete용']
 }
 
 // [5] 그룹 멤버 (Members)
@@ -62,6 +65,7 @@ Table members {
   role varchar [default: 'MEMBER', note: 'OWNER, ADMIN, MEMBER']
   status varchar [default: 'ACTIVE', note: 'ACTIVE, PENDING, BANNED']
   joined_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete용']
   
   indexes {
     (group_id, user_id) [pk]
@@ -92,4 +96,5 @@ Table schedules {
   end_at datetime [not null]
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete용']
 }
