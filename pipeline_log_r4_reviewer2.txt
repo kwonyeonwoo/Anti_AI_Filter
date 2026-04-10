@@ -1,0 +1,57 @@
+{
+  "session_id": "c9bac5e4-a63a-46fe-8cca-b096ee5e8bec",
+  "response": "```json\n{\n  \"score\": 95,\n  \"feedback\": \"ERD 설계가 매우 훌륭하며 실무 중심적입니다. 1. 확장성 및 논리적 완전성: Interactions 테이블을 통해 좋아요, 댓글, 오답노트를 통합한 점은 데이터베이스 테이블 수를 줄이고 향후 상호작용 타입이 추가될 때의 확장성을 고려한 탁월한 선택입니다. 2. API 및 Join 효율성: 핵심 엔티티가 7개로 최적화되어 있어 쿼리 작성 시 불필요한 복잡한 Join을 줄일 수 있으며, API 개발 시 단일 엔드포인트에서 type 조건만으로 여러 상호작용을 쉽게 조회/처리할 수 있습니다. 3. 삭제 처리 및 기타 기능: 모든 테이블에 deleted_at 컬럼을 추가하여 Soft Delete 정책을 일관되게 적용한 점이 좋으며, Schedules 테이블에서 group_id의 Null 허용을 통해 개인 일정과 그룹 일정을 효율적으로 통합 관리한 아이디어도 뛰어납니다. 실무에 즉시 적용 가능한 수준의 완성도 높은 설계입니다.\"\n}\n```",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 2,
+          "totalErrors": 1,
+          "totalLatencyMs": 23496
+        },
+        "tokens": {
+          "input": 9481,
+          "prompt": 9481,
+          "candidates": 244,
+          "total": 10637,
+          "cached": 0,
+          "thoughts": 912,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 2,
+            "totalErrors": 1,
+            "totalLatencyMs": 23496,
+            "tokens": {
+              "input": 9481,
+              "prompt": 9481,
+              "candidates": 244,
+              "total": 10637,
+              "cached": 0,
+              "thoughts": 912,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 0,
+      "totalSuccess": 0,
+      "totalFail": 0,
+      "totalDurationMs": 0,
+      "totalDecisions": {
+        "accept": 0,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {}
+    },
+    "files": {
+      "totalLinesAdded": 0,
+      "totalLinesRemoved": 0
+    }
+  }
+}

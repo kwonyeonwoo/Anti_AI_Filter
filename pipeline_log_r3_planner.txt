@@ -1,0 +1,14 @@
+```json
+[
+  {
+    "reviewer": "R1",
+    "score": 100,
+    "feedback": "Interactions 테이블의 Type 구분 및 Schedules 테이블의 group_id 명시가 성공적으로 반영되었습니다."
+  },
+  {
+    "reviewer": "R2",
+    "score": 100,
+    "feedback": "모든 테이블에 Soft Delete(deleted_at) 컬럼이 추가되어 논리적 완결성과 확장성이 확보되었습니다."
+  }
+]
+```

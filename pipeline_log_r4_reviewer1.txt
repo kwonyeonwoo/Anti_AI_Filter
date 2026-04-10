@@ -1,0 +1,57 @@
+{
+  "session_id": "29e1364f-59f7-4556-9018-3d0eb13ca81d",
+  "response": "```json\n{\n  \"score\": 90,\n  \"feedback\": \"1. 정규화(Normalization): 3정규형(3NF)을 충실히 만족하고 있습니다. 특히 Interactions 테이블로 다양한 상호작용(추천, 댓글, 오답노트)을 통합하고 Members 테이블에 복합 기본키(Composite PK)를 적용한 것은 데이터 중복을 최소화하고 확장성을 높이는 우수한 설계입니다. 2. 제약조건(Constraints): UNIQUE, NOT NULL, DEFAULT 제약조건이 적절히 배치되었으며, 요구사항에 맞게 모든 테이블에 Soft Delete(deleted_at)가 일관성 있게 적용되어 데이터 무결성과 이력 관리에 매우 유리합니다. 3. 인덱스(Indexes): Members 테이블의 복합키 인덱스 지정은 훌륭하지만, 쿼리 성능 최적화를 위한 추가적인 인덱스 설계가 부족합니다. Materials, Interactions, Chats, Schedules 등의 테이블에서 JOIN이나 조건 검색에 자주 사용될 외래키(user_id, group_id, material_id 등)에 대한 명시적인 인덱스(indexes 블록) 추가가 필요합니다.\"\n}\n```",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 1,
+          "totalErrors": 0,
+          "totalLatencyMs": 108038
+        },
+        "tokens": {
+          "input": 9456,
+          "prompt": 9456,
+          "candidates": 258,
+          "total": 10899,
+          "cached": 0,
+          "thoughts": 1185,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 1,
+            "totalErrors": 0,
+            "totalLatencyMs": 108038,
+            "tokens": {
+              "input": 9456,
+              "prompt": 9456,
+              "candidates": 258,
+              "total": 10899,
+              "cached": 0,
+              "thoughts": 1185,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 0,
+      "totalSuccess": 0,
+      "totalFail": 0,
+      "totalDurationMs": 0,
+      "totalDecisions": {
+        "accept": 0,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {}
+    },
+    "files": {
+      "totalLinesAdded": 0,
+      "totalLinesRemoved": 0
+    }
+  }
+}

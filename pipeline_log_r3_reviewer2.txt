@@ -1,0 +1,57 @@
+{
+  "session_id": "b0e2da32-189b-4e24-94f0-b3c061d42f7a",
+  "response": "```json\n{\n  \"score\": 100,\n  \"feedback\": \"제시된 ERD 설계는 학업 커뮤니티의 요구사항을 완벽하게 충족합니다. 1. Interactions 테이블로 여러 상호작용(Likes, Comments, Notes)을 병합한 것은 API 성능 향상과 JOIN 최소화에 매우 효과적입니다. 2. Groups와 Members 간의 다대다(N:M) 관계를 정규화(3NF) 원칙에 따라 올바르게 분리하여 데이터 무결성을 보장합니다. 3. Soft Delete(deleted_at)의 도입은 실무적인 관점에서 데이터 복원력과 이력 관리에 탁월한 선택입니다. 최종 설계로 승인합니다.\"\n}\n```",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 1,
+          "totalErrors": 0,
+          "totalLatencyMs": 16975
+        },
+        "tokens": {
+          "input": 8275,
+          "prompt": 8275,
+          "candidates": 168,
+          "total": 9947,
+          "cached": 0,
+          "thoughts": 1504,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 1,
+            "totalErrors": 0,
+            "totalLatencyMs": 16975,
+            "tokens": {
+              "input": 8275,
+              "prompt": 8275,
+              "candidates": 168,
+              "total": 9947,
+              "cached": 0,
+              "thoughts": 1504,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 0,
+      "totalSuccess": 0,
+      "totalFail": 0,
+      "totalDurationMs": 0,
+      "totalDecisions": {
+        "accept": 0,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {}
+    },
+    "files": {
+      "totalLinesAdded": 0,
+      "totalLinesRemoved": 0
+    }
+  }
+}

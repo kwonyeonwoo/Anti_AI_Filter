@@ -1,0 +1,70 @@
+{
+  "session_id": "d9d9f4dc-b769-410b-ae3c-8d1b47ed7387",
+  "response": "```json\n{\n  \"score\": 100,\n  \"feedback\": \"ERD 설계가 훌륭합니다. 1NF~3NF 정규화 원칙이 성공적으로 적용되었으며, Groups와 Users 간의 N:M 관계가 Members 테이블로 완벽하게 분리되었습니다. Interactions 테이블을 통한 상호작용(Like, Comment, Note) 통합과 Schedules 테이블의 개인/그룹 일정 병합 구조는 데이터베이스의 확장성과 쿼리 효율성을 크게 높입니다. 또한 모든 테이블에 일관되게 적용된 Soft Delete(deleted_at) 및 상태(status) 컬럼은 실무적인 데이터 무결성 및 복구 요구사항을 완벽히 충족합니다.\"\n}\n```",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 2,
+          "totalErrors": 0,
+          "totalLatencyMs": 33912
+        },
+        "tokens": {
+          "input": 11710,
+          "prompt": 17617,
+          "candidates": 177,
+          "total": 18932,
+          "cached": 5907,
+          "thoughts": 1138,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 2,
+            "totalErrors": 0,
+            "totalLatencyMs": 33912,
+            "tokens": {
+              "input": 11710,
+              "prompt": 17617,
+              "candidates": 177,
+              "total": 18932,
+              "cached": 5907,
+              "thoughts": 1138,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 1,
+      "totalSuccess": 1,
+      "totalFail": 0,
+      "totalDurationMs": 73,
+      "totalDecisions": {
+        "accept": 1,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {
+        "read_file": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 73,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        }
+      }
+    },
+    "files": {
+      "totalLinesAdded": 0,
+      "totalLinesRemoved": 0
+    }
+  }
+}
