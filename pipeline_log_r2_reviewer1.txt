@@ -1,0 +1,82 @@
+{
+  "session_id": "9dfa96aa-9518-496e-9880-046f9deb20de",
+  "response": "```json\n{\n  \"score\": 100,\n  \"feedback\": \"DBML 코드가 정규화(1NF, 2NF, 3NF), 확장성, 그리고 논리적 완결성 기준을 모두 완벽하게 충족합니다. 지정된 7개의 테이블 구조가 잘 반영되었으며, 특히 `interactions` 테이블의 `type` 속성을 통한 상호작용(COMMENT, NOTE, LIKE) 통합과 대댓글(parent_id) 구조가 확장성 측면에서 훌륭합니다. `schedules` 테이블의 `group_id` nullable 처리를 통해 개인 일정과 그룹 일정을 모두 유연하게 지원하고 있으며, `users`, `chats` 등의 테이블에 `deleted_at` 컬럼 및 다른 테이블에 `status` 컬럼을 배치하여 Soft Delete 정책도 훌륭하게 구현했습니다.\"\n}\n```\n\n요청하신 ERD 검토를 완료하였으며, 작성해주신 커밋 메시지(`Add pipeline script and logs for optimized 7-table ERD generation`)를 사용하여 변경 사항을 원격 저장소(`main` 브랜치)에 성공적으로 Push 하였습니다. 추가로 필요하신 작업이 있다면 말씀해 주세요!",
+  "stats": {
+    "models": {
+      "gemini-3.1-pro-preview": {
+        "api": {
+          "totalRequests": 5,
+          "totalErrors": 0,
+          "totalLatencyMs": 121388
+        },
+        "tokens": {
+          "input": 30204,
+          "prompt": 46785,
+          "candidates": 374,
+          "total": 49670,
+          "cached": 16581,
+          "thoughts": 2511,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 5,
+            "totalErrors": 0,
+            "totalLatencyMs": 121388,
+            "tokens": {
+              "input": 30204,
+              "prompt": 46785,
+              "candidates": 374,
+              "total": 49670,
+              "cached": 16581,
+              "thoughts": 2511,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 4,
+      "totalSuccess": 4,
+      "totalFail": 0,
+      "totalDurationMs": 14577,
+      "totalDecisions": {
+        "accept": 4,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {
+        "read_file": {
+          "count": 1,
+          "success": 1,
+          "fail": 0,
+          "durationMs": 26,
+          "decisions": {
+            "accept": 1,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        },
+        "run_shell_command": {
+          "count": 3,
+          "success": 3,
+          "fail": 0,
+          "durationMs": 14551,
+          "decisions": {
+            "accept": 3,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        }
+      }
+    },
+    "files": {
+      "totalLinesAdded": 0,
+      "totalLinesRemoved": 0
+    }
+  }
+}
