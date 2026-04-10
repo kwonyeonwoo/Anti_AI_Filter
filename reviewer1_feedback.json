@@ -1,4 +1,4 @@
 {
-  "score": 95,
-  "feedback": "제시된 7개 테이블의 통합 ERD는 3정규형(3NF)까지 잘 준수하여 데이터 중복을 최소화했으며, 적절한 외래키 및 제약조건으로 데이터 무결성을 높였습니다. 특히 좋아요, 댓글, 오답노트를 'Interactions' 테이블 하나로 통합한 구조는 조인을 줄이고 시스템 확장을 유연하게 만들어 확장성(Scalability) 측면에서 매우 우수한 설계입니다."
+  "score": 92,
+  "feedback": "The 7-table design is well-normalized (meeting 1NF, 2NF, and 3NF requirements) and logically complete. The consolidation of Likes, Comments, and Notes into the 'interactions' table is a highly effective strategy that reduces table bloat and simplifies API development. However, for optimal performance at scale, you should explicitly add composite indexes, such as '(material_id, type)' in the 'interactions' table and '(group_id, sent_at)' in the 'chats' table, to support efficient filtering and pagination. Overall, the schema comprehensively covers all community features including groups, sharing, and scheduling."
 }
