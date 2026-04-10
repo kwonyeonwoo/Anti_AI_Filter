@@ -1,52 +1,66 @@
-// [dbdiagram.io 전용 DBML 코드 - 최종 통합 7개 테이블 버전]
-// Likes 테이블을 Interactions에 병합하여 논리 구조를 단순화하고 개발 속도를 최적화했습니다.
+// [dbdiagram.io 전용 DBML 코드 - 최적화된 7개 테이블 버전]
+// 확장성(Scalability)과 논리적 완결성(Logical Completeness)을 고려한 구조 개선
 
 // [1] 사용자 (Users)
 Table users {
   id int [pk, increment]
   login_id varchar [unique, not null]
+  email varchar [unique, not null, note: '이메일 인증 및 알림용']
   password varchar [not null]
   nickname varchar [not null]
-  identity_info varchar
+  identity_info varchar [note: '학생/교사 등 신분 정보']
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, SUSPENDED, DELETED']
   created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete용']
 }
 
 // [2] 학업 자료 (Materials)
 Table materials {
   id int [pk, increment]
   user_id int [ref: > users.id]
-  category varchar
+  category varchar [note: '과목 또는 자료 유형']
   title varchar [not null]
   content text
   file_url varchar
+  view_count int [default: 0]
+  status varchar [default: 'PUBLISHED', note: 'DRAFT, PUBLISHED, ARCHIVED']
   created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
 }
 
-// [3] 통합 상호작용 (Interactions - 댓글+오답노트+추천 병합)
+// [3] 통합 상호작용 (Interactions)
 Table interactions {
   id int [pk, increment]
   user_id int [ref: > users.id]
   material_id int [ref: > materials.id]
+  parent_id int [ref: > interactions.id, note: '대댓글(Nested Comment) 지원을 위한 자기 참조']
   content text [note: 'LIKE 타입일 경우 null']
-  type varchar [note: 'COMMENT, NOTE, LIKE 구분']
+  type varchar [not null, note: 'COMMENT, NOTE, LIKE 구분']
   is_public boolean [default: true, note: '오답노트 공개 여부']
   created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
 }
 
 // [4] 스터디 그룹 (Groups)
 Table groups {
   id int [pk, increment]
-  unique_code varchar [unique, not null]
+  unique_code varchar [unique, not null, note: '초대 코드']
   name varchar [not null]
+  description text
+  max_members int [default: 50]
   creator_id int [ref: > users.id]
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, CLOSED']
   created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
 }
 
 // [5] 그룹 멤버 (Members)
 Table members {
   group_id int [ref: > groups.id]
   user_id int [ref: > users.id]
-  role varchar
+  role varchar [default: 'MEMBER', note: 'OWNER, ADMIN, MEMBER']
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, PENDING, BANNED']
   joined_at timestamp [default: `now()`]
   
   indexes {
@@ -60,15 +74,22 @@ Table chats {
   group_id int [ref: > groups.id]
   user_id int [ref: > users.id]
   message text [not null]
+  message_type varchar [default: 'TEXT', note: 'TEXT, IMAGE, FILE']
   sent_at timestamp [default: `now()`]
+  deleted_at timestamp [note: '메시지 삭제 지원 (Soft delete)']
 }
 
 // [7] 통합 일정 (Schedules)
 Table schedules {
   id int [pk, increment]
-  user_id int [ref: > users.id]
-  group_id int [ref: > groups.id, note: 'null이면 개인일정']
+  user_id int [ref: > users.id, note: '일정 생성자']
+  group_id int [ref: > groups.id, note: 'null이면 개인일정, 값이 있으면 그룹일정']
   title varchar [not null]
+  description text
+  location varchar [note: '장소 또는 온라인 링크']
+  is_all_day boolean [default: false]
   start_at datetime [not null]
   end_at datetime [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
 }
