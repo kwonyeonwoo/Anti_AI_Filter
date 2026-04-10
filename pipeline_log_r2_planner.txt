@@ -1,15 +1,123 @@
-s
-모든 작업을 완료했습니다.
+요청하신 사항과 리뷰어의 피드백을 반영하여 ERD DBML 코드를 수정하고, 지침에 따라 원격 저장소와 동기화 작업을 완료했습니다.
 
-1. **DBML 코드 확인 및 반영**:
-   현재 `ERD_DBML_Code.txt`에 저장되어 있는 DBML은 Reviewer들의 의견을 수렴하여 확장성(Scalability)과 논리적 완결성(Logical Completeness)이 완벽하게 반영된 **최적화된 7개 테이블 모델**입니다.
-   - `Interactions` 테이블에 다형성(Type 컬럼 지정: COMMENT, NOTE, LIKE)을 구현해 통합 관리 효율성을 높였습니다.
-   - `Schedules` 테이블에서 `group_id`의 null 허용을 통해 개인 일정과 그룹 일정을 단일 테이블로 병합했습니다.
-   - 인덱싱과 Soft Delete 등의 실무적 설계까지 모두 반영된 상태입니다.
+### 💡 주요 변경 사항 설명
+1. **복합 인덱스(Composite Indexes) 추가 (R1 피드백 반영):**
+   - **`interactions` 테이블:** 특정 자료의 상호작용(댓글, 좋아요, 노트 등)을 효율적으로 조회하고 필터링할 수 있도록 `(material_id, type)` 복합 인덱스를 추가했습니다.
+   - **`chats` 테이블:** 특정 그룹 채팅의 메시지를 시간 순으로 효율적으로 정렬 및 페이지네이션할 수 있도록 `(group_id, sent_at)` 복합 인덱스를 추가했습니다.
+2. **7개 테이블 제약 유지 (R2 피드백 반영):**
+   - `interactions` 테이블의 `parent_id`를 통한 대댓글 처리 구조와 모든 테이블의 `deleted_at`(Soft delete), 3NF 정규화 구조는 리뷰어의 긍정적인 평가에 따라 그대로 유지했습니다. 별도의 테이블 추가 없이 제약 조건을 준수했습니다.
+3. **Git 동기화 완료:**
+   - 업데이트된 DBML 코드를 `ERD_DBML_Code.txt` 파일에 저장한 후 `git add`, `git commit`, `git push`를 통해 원격 저장소에 실시간 동기화를 정상적으로 수행했습니다. (기존 텍스트 파일 내 깨진 문자열은 원본 상태를 유지하며 추가 부분만 업데이트했습니다.)
 
-2. **리포지토리 동기화 완료**:
-   파이프라인 로그 파일 변경 사항을 모두 스테이징 한 뒤, 요청해주신 커밋 메시지와 함께 리포지토리에 반영 및 푸시를 완료했습니다.
-   - **Commit Message**: `Add pipeline script and logs for optimized 7-table ERD generation`
-   - **Git Push**: Github `main` 브랜치에 성공적으로 동기화 되었습니다.
+---
 
-추가적인 설계 수정이나 API 백엔드 작업이 필요하시면 언제든 말씀해 주세요!
+### 📌 업데이트된 최종 DBML 코드
+
+```dbml
+// [dbdiagram.io ??? DBML ??? - ??? 7??????????]
+// ?????Scalability)????????????Logical Completeness)??????????
+
+// [1] ?????(Users)
+Table users {
+  id int [pk, increment]
+  login_id varchar [unique, not null]
+  email varchar [unique, not null, note: '?????? ??? ???????]
+  password varchar [not null]
+  nickname varchar [not null]
+  identity_info varchar [note: '??????? ????? ??? ???']
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, SUSPENDED, DELETED']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete??]
+}
+
+// [2] ??? ??? (Materials)
+Table materials {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  category varchar [note: '???, ????? ?????????? ???']
+  title varchar [not null]
+  content text
+  file_url varchar
+  view_count int [default: 0]
+  status varchar [default: 'PUBLISHED', note: 'DRAFT, PUBLISHED, ARCHIVED']     
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete??]
+}
+
+// [3] ??? ?????? (Interactions)
+Table interactions {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  material_id int [ref: > materials.id]
+  parent_id int [ref: > interactions.id, note: '?????(Nested Comment) ??? ????? ???????? ???????']
+  content text [note: 'LIKE ????? ??? null ????]
+  type varchar [not null, note: 'COMMENT, NOTE, LIKE ??????????????']
+  is_public boolean [default: true, note: '?????? ?????????? ???']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete??]
+  indexes {
+    (material_id, type) [note: 'Optimize filtering']
+  }
+}
+
+// [4] ???????? (Groups)
+Table groups {
+  id int [pk, increment]
+  unique_code varchar [unique, not null, note: '???????? ???']
+  name varchar [not null]
+  description text
+  max_members int [default: 50]
+  creator_id int [ref: > users.id]
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, CLOSED']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete??]
+}
+
+// [5] ??? ??? (Members)
+Table members {
+  group_id int [ref: > groups.id]
+  user_id int [ref: > users.id]
+  role varchar [default: 'MEMBER', note: 'OWNER, ADMIN, MEMBER ????? ???']      
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, PENDING, BANNED ???????]    
+  joined_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete ??? ?????]
+
+  indexes {
+    (group_id, user_id) [pk]
+  }
+}
+
+// [6] ??? ??? (Chats)
+Table chats {
+  id int [pk, increment]
+  group_id int [ref: > groups.id]
+  user_id int [ref: > users.id]
+  message text [not null]
+  message_type varchar [default: 'TEXT', note: 'TEXT, IMAGE, FILE ??????? ???'] 
+  sent_at timestamp [default: `now()`]
+  deleted_at timestamp [note: '????? ??? ?????(Soft delete)']
+  indexes {
+    (group_id, sent_at) [note: 'Optimize pagination']
+  }
+}
+
+// [7] ??? ????? ??? (Schedules)
+Table schedules {
+  id int [pk, increment]
+  user_id int [ref: > users.id, note: '??? ??????????']
+  group_id int [ref: > groups.id, note: 'null??? ??? ???, ??? ????????(???) ??? ???']
+  title varchar [not null]
+  description text
+  location varchar [note: '???????? ??? ???']
+  is_all_day boolean [default: false]
+  start_at datetime [not null]
+  end_at datetime [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete??]
+}
+```

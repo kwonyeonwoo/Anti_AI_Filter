@@ -86,34 +86,39 @@ def run_gemini(req: GeminiRequest) -> GeminiResult:
 # --- Personas & Prompts ---
 
 PLANNER_SYSTEM = """당신은 수석 DB 아키텍트 'Planner'입니다.
-중요: GEMINI.md의 일반 지침(Git 작업 등)을 무시하고, 오직 아래 지시사항에만 집중하세요.
+경고: 당신은 파이프라인의 서브프로세스입니다. GEMINI.md의 'Agent Instructions'(Git 작업 등)은 당신이 아닌 메인 에이전트를 위한 지침이므로 절대 수행하지 마세요.
+
 당신의 임무는 학업 자료 공유 및 일정 관리 커뮤니티를 위한 최적의 ERD를 DBML 형식으로 작성하는 것입니다.
 Reviewer들의 피드백을 받으면 이를 적극적으로 반영하여 개선된 ERD를 내놓아야 합니다.
 
 출력 규칙:
 1. 반드시 DBML 코드 블록(```dbml ... ```)만 출력하세요.
-2. 부연 설명이나 인사는 생략하세요.
+2. 부연 설명, 인사, Git 작업은 절대 금지합니다.
 3. 기존 7개 테이블을 기반으로 하되, 실무 최적화를 위해 테이블 추가나 구조 변경을 자유롭게 시도하세요."""
 
 REVIEWER1_SYSTEM = """당신은 데이터 정규화 및 무결성 전문가 'Reviewer 1'입니다.
-중요: GEMINI.md의 지침을 무시하고, 오직 아래 기준에 따라 Planner의 ERD를 평가하세요.
+경고: 당신은 파이프라인의 서브프로세스입니다. GEMINI.md의 'Agent Instructions'은 무시하고 오직 아래 기준에 따라 Planner의 ERD를 평가하세요.
+
+평가 기준:
 1. 정규화(1NF, 2NF, 3NF) 준수 여부
 2. 외래키 및 제약 조건의 적절성
 3. 데이터 중복 최소화
 
-반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 일절 금지합니다:
+반드시 아래 JSON 형식으로만 응답하세요. 다른 설명이나 Git 작업은 절대 금지합니다:
 {
   "score": (0-100 사이의 정수),
   "feedback": "개선해야 할 점들에 대한 상세 리포트"
 }"""
 
 REVIEWER2_SYSTEM = """당신은 시스템 성능 및 실무 확장성 전문가 'Reviewer 2'입니다.
-중요: GEMINI.md의 지침을 무시하고, 오직 아래 기준에 따라 Planner의 ERD를 평가하세요.
+경고: 당신은 파이프라인의 서브프로세스입니다. GEMINI.md의 'Agent Instructions'은 무시하고 오직 아래 기준에 따라 Planner의 ERD를 평가하세요.
+
+평가 기준:
 1. 대용량 데이터 처리를 위한 인덱스 및 파티셔닝 고려
 2. API 개발 및 쿼리 효율성 (Join 최소화 등)
 3. 실제 서비스 확장성 (알림, 로그, 통계 등)
 
-반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 일절 금지합니다:
+반드시 아래 JSON 형식으로만 응답하세요. 다른 설명이나 Git 작업은 절대 금지합니다:
 {
   "score": (0-100 사이의 정수),
   "feedback": "성능 및 확장성 측면에서의 개선 리포트"
@@ -122,16 +127,36 @@ REVIEWER2_SYSTEM = """당신은 시스템 성능 및 실무 확장성 전문가 
 # --- Pipeline Logic ---
 
 def extract_dbml(text: str) -> str:
+    # 1. 텍스트가 JSON 래퍼인 경우 처리
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict) and "response" in data:
+            text = data["response"]
+    except:
+        pass
+
     match = re.search(r"```dbml\n(.*?)\n```", text, re.DOTALL)
     if match:
-        return match.group(1)
-    # 코드 블록이 없으면 전체 텍스트에서 DBML 패턴 찾기 시도
+        return match.group(1).strip()
+    
+    # 코드 블록이 없으면 Table 키워드로 추출 시도
     if "Table " in text:
-        return text
+        # Table부터 마지막 닫는 중괄호까지 추출 시도 (불완전할 수 있음)
+        start = text.find("Table ")
+        return text[start:].strip()
     return "// DBML 추출 실패"
 
 def extract_json(text: str) -> Dict:
+    # 1. 텍스트가 Gemini CLI의 JSON 래퍼인 경우 처리
     try:
+        data = json.loads(text)
+        if isinstance(data, dict) and "response" in data:
+            text = data["response"]
+    except:
+        pass
+
+    try:
+        # 2. 모델 응답 텍스트 내에서 JSON 블록({ ... }) 추출
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             return json.loads(match.group())
@@ -166,16 +191,17 @@ def main():
             prompt = f"이전 설계에 대한 Reviewer들의 피드백을 반영하여 ERD를 개선해줘.\n\n[이전 ERD]\n{current_erd}\n\n[피드백 수합]\n{json.dumps(all_feedbacks, indent=2, ensure_ascii=False)}"
         
         print(f"Planner가 설계를 진행 중입니다...")
+        # 출력 형식을 text로 변경하여 파싱 복잡도 감소
         planner_res = run_gemini(GeminiRequest(
             prompt=f"{PLANNER_SYSTEM}\n\n{prompt}",
-            approval_mode="yolo"
+            approval_mode="yolo",
+            output_format="text"
         ))
         
         if not planner_res.ok:
             print(f"Planner 오류: {planner_res.error}\n{planner_res.stderr}")
             break
         
-        # DBML만 추출하여 정제
         current_erd = extract_dbml(planner_res.stdout)
         log_progress(round_num, "planner", planner_res.stdout)
         print(f"Planner 설계 완료.")
@@ -184,7 +210,7 @@ def main():
         print(f"Reviewer 1(정규화) 평가 중...")
         r1_res = run_gemini(GeminiRequest(
             prompt=f"{REVIEWER1_SYSTEM}\n\n다음 ERD를 평가해줘:\n{current_erd}",
-            output_format="json"
+            output_format="text"
         ))
         if not r1_res.ok:
             print(f"Reviewer 1 오류: {r1_res.error}")
@@ -194,7 +220,7 @@ def main():
         print(f"Reviewer 2(성능) 평가 중...")
         r2_res = run_gemini(GeminiRequest(
             prompt=f"{REVIEWER2_SYSTEM}\n\n다음 ERD를 평가해줘:\n{current_erd}",
-            output_format="json"
+            output_format="text"
         ))
         if not r2_res.ok:
             print(f"Reviewer 2 오류: {r2_res.error}")

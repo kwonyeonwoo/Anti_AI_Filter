@@ -1,0 +1,10 @@
+Reviewer 1으로서 `ERD_DBML_Code.txt`에 기록된 7개 테이블(통합 상호작용 버전)에 대한 정규화 수준(1NF, 2NF, 3NF), 쿼리 성능 스케일, 논리적 완전성을 검토했습니다. 
+
+검토 결과 92점의 점수와 함께 다음과 같은 피드백을 도출하여 `reviewer1_feedback.json` 파일에 저장하고, 실시간 동기화를 위해 Git 작업(add, commit, push)을 완료했습니다.
+
+```json
+{
+  "score": 92,
+  "feedback": "The 7-table design is well-normalized (meeting 1NF, 2NF, and 3NF requirements) and logically complete. The consolidation of Likes, Comments, and Notes into the 'interactions' table is a highly effective strategy that reduces table bloat and simplifies API development. However, for optimal performance at scale, you should explicitly add composite indexes, such as '(material_id, type)' in the 'interactions' table and '(group_id, sent_at)' in the 'chats' table, to support efficient filtering and pagination. Overall, the schema comprehensively covers all community features including groups, sharing, and scheduling."
+}
+```
