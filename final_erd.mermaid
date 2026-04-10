@@ -1,0 +1,121 @@
+erDiagram
+    %% 사용자 및 인증 (Users & Auth)
+    USERS {
+        bigint user_id PK "AUTO_INCREMENT"
+        varchar(50) username "사용자 닉네임"
+        varchar(255) email UK "이메일 (유니크)"
+        varchar(255) password_hash "암호화된 비밀번호"
+        enum role "STUDENT, PROFESSOR, ADMIN"
+        timestamp created_at "가입일"
+        timestamp updated_at "수정일"
+    }
+
+    %% 강의/과목 (Courses)
+    COURSES {
+        bigint course_id PK "AUTO_INCREMENT"
+        varchar(20) course_code UK "학수번호"
+        varchar(100) course_name "강의명"
+        varchar(50) professor_name "교수명"
+        varchar(10) semester "개설학기 (예: 2024-1)"
+        timestamp created_at "생성일"
+    }
+
+    %% 수강 정보 (N:M Mapping)
+    USER_COURSES {
+        bigint user_id PK, FK
+        bigint course_id PK, FK
+        timestamp enrolled_at "수강 등록일"
+    }
+
+    %% 학업 자료 (Materials)
+    MATERIALS {
+        bigint material_id PK "AUTO_INCREMENT"
+        bigint user_id FK "업로더 ID"
+        bigint course_id FK "관련 강의 ID (Nullable)"
+        varchar(255) title "자료 제목"
+        text description "자료 설명"
+        varchar(512) file_url "클라우드 스토리지 URL"
+        varchar(50) file_type "파일 형식 (PDF, DOCX 등)"
+        int size_bytes "파일 크기"
+        int view_count "조회수 (Default: 0)"
+        int download_count "다운로드수 (Default: 0)"
+        timestamp created_at "업로드일"
+        timestamp updated_at "수정일"
+    }
+
+    %% 자료 댓글/리뷰 (Material Comments)
+    MATERIAL_COMMENTS {
+        bigint comment_id PK "AUTO_INCREMENT"
+        bigint material_id FK
+        bigint user_id FK
+        text content "댓글 내용"
+        timestamp created_at "작성일"
+        timestamp updated_at "수정일"
+    }
+
+    %% 태그 분류 시스템 (Tags)
+    TAGS {
+        int tag_id PK "AUTO_INCREMENT"
+        varchar(50) name UK "태그명 (예: 기출문제, 요약본)"
+    }
+
+    %% 자료-태그 매핑 (N:M Mapping)
+    MATERIAL_TAGS {
+        bigint material_id PK, FK
+        int tag_id PK, FK
+    }
+
+    %% 통합 일정 관리 (Schedules)
+    SCHEDULES {
+        bigint schedule_id PK "AUTO_INCREMENT"
+        bigint user_id FK "개인 일정용 (Nullable)"
+        bigint course_id FK "강의 일정용 (Nullable)"
+        bigint group_id FK "스터디 일정용 (Nullable)"
+        varchar(255) title "일정 제목"
+        text description "일정 상세 내용"
+        datetime start_time "시작 시간"
+        datetime end_time "종료 시간"
+        enum schedule_type "PERSONAL, COURSE, GROUP"
+        timestamp created_at "생성일"
+        timestamp updated_at "수정일"
+    }
+
+    %% 스터디 그룹 (Study Groups)
+    STUDY_GROUPS {
+        bigint group_id PK "AUTO_INCREMENT"
+        varchar(100) name "그룹명"
+        text description "그룹 소개"
+        bigint created_by FK "생성자(Users)"
+        int max_members "최대 인원"
+        timestamp created_at "생성일"
+        timestamp updated_at "수정일"
+    }
+
+    %% 스터디 그룹 멤버 (N:M Mapping)
+    STUDY_GROUP_MEMBERS {
+        bigint group_id PK, FK
+        bigint user_id PK, FK
+        enum role "LEADER, MEMBER"
+        timestamp joined_at "가입일"
+    }
+
+    %% Relationships (관계 정의)
+    USERS ||--o{ USER_COURSES : "수강 (Enrolls in)"
+    COURSES ||--o{ USER_COURSES : "수강생 (Has enrolled)"
+    
+    USERS ||--o{ MATERIALS : "업로드 (Uploads)"
+    COURSES ||--o{ MATERIALS : "관련 자료 (Related to)"
+    
+    USERS ||--o{ MATERIAL_COMMENTS : "작성 (Writes)"
+    MATERIALS ||--o{ MATERIAL_COMMENTS : "댓글 (Has)"
+    
+    MATERIALS ||--o{ MATERIAL_TAGS : "태그됨 (Tagged with)"
+    TAGS ||--o{ MATERIAL_TAGS : "적용됨 (Applied to)"
+    
+    USERS ||--o{ SCHEDULES : "개인 일정 (Owns)"
+    COURSES ||--o{ SCHEDULES : "강의/시험 일정 (Has)"
+    STUDY_GROUPS ||--o{ SCHEDULES : "스터디 일정 (Has)"
+    
+    USERS ||--o{ STUDY_GROUPS : "개설 (Creates)"
+    USERS ||--o{ STUDY_GROUP_MEMBERS : "참여 (Joins)"
+    STUDY_GROUPS ||--o{ STUDY_GROUP_MEMBERS : "멤버 (Has members)"

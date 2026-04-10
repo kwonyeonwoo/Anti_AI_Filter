@@ -1,0 +1,74 @@
+// [dbdiagram.io 전용 DBML 코드 - 최종 통합 7개 테이블 버전]
+// Likes 테이블을 Interactions에 병합하여 논리 구조를 단순화하고 개발 속도를 최적화했습니다.
+
+// [1] 사용자 (Users)
+Table users {
+  id int [pk, increment]
+  login_id varchar [unique, not null]
+  password varchar [not null]
+  nickname varchar [not null]
+  identity_info varchar
+  created_at timestamp [default: `now()`]
+}
+
+// [2] 학업 자료 (Materials)
+Table materials {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  category varchar
+  title varchar [not null]
+  content text
+  file_url varchar
+  created_at timestamp [default: `now()`]
+}
+
+// [3] 통합 상호작용 (Interactions - 댓글+오답노트+추천 병합)
+Table interactions {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  material_id int [ref: > materials.id]
+  content text [note: 'LIKE 타입일 경우 null']
+  type varchar [note: 'COMMENT, NOTE, LIKE 구분']
+  is_public boolean [default: true, note: '오답노트 공개 여부']
+  created_at timestamp [default: `now()`]
+}
+
+// [4] 스터디 그룹 (Groups)
+Table groups {
+  id int [pk, increment]
+  unique_code varchar [unique, not null]
+  name varchar [not null]
+  creator_id int [ref: > users.id]
+  created_at timestamp [default: `now()`]
+}
+
+// [5] 그룹 멤버 (Members)
+Table members {
+  group_id int [ref: > groups.id]
+  user_id int [ref: > users.id]
+  role varchar
+  joined_at timestamp [default: `now()`]
+  
+  indexes {
+    (group_id, user_id) [pk]
+  }
+}
+
+// [6] 그룹 채팅 (Chats)
+Table chats {
+  id int [pk, increment]
+  group_id int [ref: > groups.id]
+  user_id int [ref: > users.id]
+  message text [not null]
+  sent_at timestamp [default: `now()`]
+}
+
+// [7] 통합 일정 (Schedules)
+Table schedules {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  group_id int [ref: > groups.id, note: 'null이면 개인일정']
+  title varchar [not null]
+  start_at datetime [not null]
+  end_at datetime [not null]
+}

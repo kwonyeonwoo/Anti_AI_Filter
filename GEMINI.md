@@ -9,18 +9,19 @@
 - **Current Status:** Hugging Face Spaces 빌드 오류(exit code 100) 해결을 위해 Dockerfile 최적화 완료 및 푸시됨. 최종 배포 확인 단계.
 - **Next Step:** Hugging Face 빌드 성공 여부 확인 후 Vercel 프론트엔드와 연결 테스트.
 
-### 2. Filter Optimizer Pipeline
-- **Description:** 에이전트 자동화 루프를 통한 필터 성능 최적화 도구.
-- **Key Tech:** Planner-Coder-Tester 루프, AI Confusion Score 측정.
-- **Current Status:** 고양이 캐릭터 이미지 대상 87.48점 달성. 스텔스 필터 개발로 인해 잠시 중단.
-- **Next Step:** 특정 이미지에 대해 95% 방어율 재도전 시 가동.
+### 3. Academic Community ERD Design (Final Decision)
+- **Description:** 학업 자료 공유 및 일정 관리 커뮤니티를 위한 DB 설계.
+- **Current Status:** 최종 7개 테이블(통합 상호작용 버전)로 확정.
+- **Architecture Rationale:** 
+    - **Interactions 병합:** Likes(추천), Comments(댓글), Notes(오답노트)를 하나의 테이블로 통합하여 데이터 관리 및 API 개발 효율성 극대화.
+    - **정석 구조 유지:** Groups와 Members를 분리하여 N:M 관계 및 정규화(3NF) 원칙 준수.
+    - **실무 중심 설계:** dbdiagram.io 시각화 및 실제 SQL 구축이 용이한 구조.
+- **Next Step:** 확정된 스키마를 바탕으로 API 설계 및 데이터베이스 서버 구축.
 
 ## 🛠 Active Configurations
-- **GitHub:** https://github.com/kwonyeonwoo/Anti_AI_Filter.git
-- **Backend (HF):** `kwonyeonwoo/Anti_Ai_Filter` (Space Name)
-- **Frontend (Vercel):** Connected to GitHub repo.
+- **ERD Design:** `ERD_DBML_Code.txt` (최종 7개 테이블 DBML 코드 저장됨).
+- **Subprocess API:** `Gemini_CLI_Subprocess_API.md` 참고.
 
 ## 💡 Agent Instructions
-- 사용자로부터 "1번 프로젝트 하자" 또는 "웹 서비스 확인해줘"라는 요청을 받으면 `Anti-AI Filter Web`의 맥락에서 작업을 재개할 것.
-- 모든 작업 완료 후 `git add/commit/push`를 수행하여 다른 기기와 실시간 동기화를 유지할 것.
-- 시각적 품질과 방어 성능 사이의 균형을 최우선으로 할 것.
+- "ERD 작업" 요청 시 반드시 `ERD_DBML_Code.txt`의 **7개 테이블 통합 버전**을 참조할 것.
+- 모든 작업 완료 후 실시간 동기화를 위해 git 작업을 수행할 것. (git add/commit/push)
