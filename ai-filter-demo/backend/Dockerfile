@@ -7,22 +7,31 @@ ENV PORT=7860
 
 WORKDIR /app
 
-RUN apt-get update -y && \
+# Robust apt-get with cache-busting and retries (Fixes exit code 100)
+RUN apt-get update --allow-releaseinfo-change && \
     apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install PyTorch CPU first (Large package)
 RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
+# Copy requirements and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy all application files
 COPY . .
 
+# Ensure write permissions for temp files and runtime directories
 RUN mkdir -p /app/tmp && chmod -R 777 /app/tmp
 
 EXPOSE 7860
 
-CMD ["uvicorn", "main.py:app", "--host", "0.0.0.0", "--port", "7860"]
+# Directly run uvicorn for better stability on Hugging Face
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]

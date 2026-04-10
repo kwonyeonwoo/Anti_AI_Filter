@@ -1,4 +1,15 @@
+---
+title: Anti AI Filter
+emoji: 🛡️
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # AI Agent Pipeline Project
+...
 
 This project implements a multi-agent workflow: **Planner -> Reviewer -> Coder -> Tester**.
 

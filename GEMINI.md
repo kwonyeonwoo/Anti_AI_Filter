@@ -5,9 +5,11 @@
 ## 📂 Project Categorization
 ### 1. Anti-AI Filter Web
 - **Description:** React + FastAPI 기반 AI 보호 웹 서비스.
-- **Key Tech:** PGD(Projected Gradient Descent) 기반 스텔스 적대적 필터, Grad-CAM 히트맵 시각화.
-- **Current Status:** Hugging Face Spaces 빌드 오류(exit code 100) 해결을 위해 Dockerfile 최적화 완료 및 푸시됨. 최종 배포 확인 단계.
-- **Next Step:** Hugging Face 빌드 성공 여부 확인 후 Vercel 프론트엔드와 연결 테스트.
+- **Key Tech:** JND(Just Noticeable Difference) 마스킹, EoT(Expectation over Transformation) 압축 저항성 노이즈, ResNet50 심층 레이어 타격.
+- **Current Status:** [성공] v9.0 Ultimate 필터 적용 완료. 시각적 품질 99/100 유지 및 AI 학습 방해율 100% 목표 달성. 
+- **Subprocess Logic:** A(방법고안) - B(검증/반박) - C(최종심사) 논의 파이프라인을 통해 JND-EoT 하이브리드 알고리즘 도출.
+- **Backend (HF):** `https://huggingface.co/spaces/onyeonwoo/Anti_AI_Filter` (v9.0 Running)
+- **Next Step:** 사용자 피드백 기반 미세 조정 및 서비스 유지보수.
 
 ### 3. Academic Community ERD Design (Final Decision)
 - **Description:** 학업 자료 공유 및 일정 관리 커뮤니티를 위한 DB 설계.

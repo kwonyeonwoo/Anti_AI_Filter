@@ -15,5 +15,6 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git remote add hf https://kwonyeonwoo:$HF_TOKEN@huggingface.co/spaces/kwonyeonwoo/Anti_Ai_Filter
+          git remote add hf https://onyeonwoo:$HF_TOKEN@huggingface.co/spaces/onyeonwoo/Anti_AI_Filter
           git push --force hf main
+
