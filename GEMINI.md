@@ -13,12 +13,16 @@
 
 ### 3. Academic Community ERD Design (Final Decision)
 - **Description:** 학업 자료 공유 및 일정 관리 커뮤니티를 위한 DB 설계.
-- **Current Status:** 최종 7개 테이블(통합 상호작용 버전)로 확정.
+- **Current Status:** [성공] 최종 7개 테이블 최적화 및 명세서 구축 완료.
 - **Architecture Rationale:** 
-    - **Interactions 병합:** Likes(추천), Comments(댓글), Notes(오답노트)를 하나의 테이블로 통합하여 데이터 관리 및 API 개발 효율성 극대화.
-    - **정석 구조 유지:** Groups와 Members를 분리하여 N:M 관계 및 정규화(3NF) 원칙 준수.
-    - **실무 중심 설계:** dbdiagram.io 시각화 및 실제 SQL 구축이 용이한 구조.
-- **Next Step:** 확정된 스키마를 바탕으로 API 설계 및 데이터베이스 서버 구축.
+    - **Interactions 병합:** Likes, Comments, Notes를 하나의 테이블로 통합하여 관리 효율성 극대화.
+    - **Performance:** `interactions(material_id, type)`, `chats(group_id, sent_at)` 복합 인덱스 설계 반영.
+    - **Scalability:** 모든 테이블에 Soft Delete(`deleted_at`) 정책 적용 및 `parent_id`를 이용한 계층형 댓글 구조 지원.
+- **Key Deliverables:**
+    - `final_erd_v2.dbml`: dbdiagram.io용 최종 코드.
+    - `FINAL_ERD_SPEC.html`: 브라우저 기반 통합 시각화 명세서.
+    - `pipeline/erd_pipeline_v2.py`: Planner-Reviewer 자동 최적화 파이프라인.
+- **Next Step:** 확정된 스키마를 바탕으로 API 설계 및 데이터베이스 서버 초기 구축.
 
 ## 🛠 Active Configurations
 - **ERD Design:** `ERD_DBML_Code.txt` (최종 7개 테이블 DBML 코드 저장됨).

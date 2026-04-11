@@ -1,118 +1,83 @@
 erDiagram
-    %% [1] 회원 정보 (Users)
-    USERS {
-        bigint user_id PK "ID (Auto Increment)"
-        varchar(50) login_id UK "로그인 아이디 (중복 금지)"
-        varchar(255) password_hash "암호화된 비밀번호"
-        varchar(100) nickname "닉네임"
-        varchar(255) identity_info "본인확인 정보 (이메일/번호)"
-        timestamp created_at "가입일"
-        timestamp updated_at "수정일"
-    }
+    users ||--o{ materials : "uploads"
+    users ||--o{ interactions : "interacts"
+    users ||--o{ groups : "creates"
+    users ||--o{ members : "belongs_to"
+    users ||--o{ chats : "sends"
+    users ||--o{ schedules : "manages"
+    
+    materials ||--o{ interactions : "has"
+    groups ||--o{ members : "has_members"
+    groups ||--o{ chats : "has_messages"
+    groups ||--o{ schedules : "has_events"
 
-    %% [2] 학습 자료 공유 (Materials)
-    CATEGORIES {
-        int category_id PK
-        varchar(100) name "분류명 (과목 등)"
-    }
-
-    MATERIALS {
-        bigint material_id PK "자료 ID"
-        bigint uploader_id FK "작성자 ID"
-        int category_id FK "분류 ID"
-        varchar(255) title "제목"
-        text description "설명 (게시글 내용)"
-        varchar(512) file_url "업로드된 파일 경로"
-        timestamp created_at "업로드 날짜"
-        timestamp updated_at "수정 날짜 (별도 표시용)"
-    }
-
-    %% [3] 피드백 및 추천 (Feedback & Recommendations)
-    COMMENTS {
-        bigint comment_id PK
-        bigint material_id FK
-        bigint user_id FK "작성자"
-        text content "내용"
+    users {
+        int id PK
+        string login_id
+        string email
+        string password
+        string nickname
+        string identity_info
+        string status
         timestamp created_at
-        timestamp updated_at
+        timestamp deleted_at
     }
 
-    VOTES {
-        bigint vote_id PK
-        bigint user_id FK "UK: 중복 불가"
-        bigint target_id FK "UK: 대상 ID (게시글/댓글/답글)"
-        varchar(20) target_type "대상 타입 (MATERIAL, COMMENT, REPLY)"
-        boolean is_like "추천/비추천 여부"
+    materials {
+        int id PK
+        int user_id FK
+        string category
+        string title
+        text content
+        string file_url
+        int view_count
+        string status
         timestamp created_at
     }
 
-    INCORRECT_NOTES {
-        bigint note_id PK
-        bigint user_id FK
-        bigint material_id FK "참조 자료 (Nullable)"
-        text content "내용"
-        boolean is_public "공개/비공개 선택"
+    interactions {
+        int id PK
+        int user_id FK
+        int material_id FK
+        int parent_id FK
+        text content
+        string type
+        boolean is_public
         timestamp created_at
     }
 
-    %% [4] 개인 학업 캘린더 (Personal Calendar)
-    SCHEDULES {
-        bigint schedule_id PK
-        bigint user_id FK "개인/생성자 ID"
-        bigint group_id FK "그룹 일정일 경우 (Nullable)"
-        varchar(255) title "일정명"
-        datetime start_time "시작 시간 (중복 경고용)"
-        datetime end_time "종료 시간 (중복 경고용)"
-        text memo "간략한 메모"
-        enum type "PERSONAL, GROUP"
+    groups {
+        int id PK
+        string unique_code
+        string name
+        int creator_id FK
+        string status
         timestamp created_at
     }
 
-    %% [5] 그룹 (Groups)
-    STUDY_GROUPS {
-        bigint group_id PK
-        varchar(20) unique_code UK "고유 번호 (중복 불가)"
-        varchar(100) name "그룹명"
-        text description "설명"
-        bigint creator_id FK "생성자"
-        timestamp created_at
-    }
-
-    GROUP_MEMBERS {
-        bigint group_id PK, FK
-        bigint user_id PK, FK
-        enum role "LEADER, MEMBER"
+    members {
+        int group_id PK, FK
+        int user_id PK, FK
+        string role
+        string status
         timestamp joined_at
     }
 
-    GROUP_CHATS {
-        bigint chat_id PK
-        bigint group_id FK
-        bigint user_id FK "발신자"
-        text message "메시지 내용"
+    chats {
+        int id PK
+        int group_id FK
+        int user_id FK
+        text message
+        string message_type
         timestamp sent_at
     }
 
-    %% [6] 관계 정의 (Relationships)
-    USERS ||--o{ MATERIALS : "업로드 (1:N)"
-    CATEGORIES ||--o{ MATERIALS : "분류 (1:N)"
-    
-    USERS ||--o{ COMMENTS : "작성 (1:N)"
-    MATERIALS ||--o{ COMMENTS : "피드백 (1:N)"
-    
-    USERS ||--o{ VOTES : "투표 (1:N, Unique Key 제약)"
-    MATERIALS ||--o{ VOTES : "추천됨"
-    COMMENTS ||--o{ VOTES : "추천됨"
-
-    USERS ||--o{ INCORRECT_NOTES : "작성 (1:N)"
-    MATERIALS ||--o{ INCORRECT_NOTES : "오답노트 원본"
-
-    USERS ||--o{ SCHEDULES : "소유/생성 (1:N)"
-    STUDY_GROUPS ||--o{ SCHEDULES : "그룹 일정 공유 (1:N)"
-
-    USERS ||--o{ STUDY_GROUPS : "개설 (1:N)"
-    USERS ||--o{ GROUP_MEMBERS : "소속 (N:M)"
-    STUDY_GROUPS ||--o{ GROUP_MEMBERS : "멤버 관리"
-
-    STUDY_GROUPS ||--o{ GROUP_CHATS : "대화 내역"
-    USERS ||--o{ GROUP_CHATS : "메시지 발신"
+    schedules {
+        int id PK
+        int user_id FK
+        int group_id FK
+        string title
+        datetime start_at
+        datetime end_at
+        string status
+    }

@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>학업 커뮤니티 최종 ERD 명세서 (dbdiagram.io 기반)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true, theme:'forest'});</script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 40px; background-color: #f4f7f6; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 30px; margin-bottom: 30px; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .pk { background-color: #e74c3c; color: white; }
+        .fk { background-color: #f1c40f; color: #333; }
+        .idx { background-color: #2ecc71; color: white; }
+        .code-box { background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; overflow-x: auto; white-space: pre; position: relative; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>학업 커뮤니티 통합 논리 ERD 명세서</h1>
+        <p><strong>버전:</strong> 2.1 (최종 최적화) | <strong>최종 수정일:</strong> 2026-04-10</p>
+    </div>
+
+    <div class="card">
+        <h2>1. 논리 관계도 (Relationship Diagram)</h2>
+        <div class="mermaid">
+        erDiagram
+            users ||--o{ materials : "uploads"
+            users ||--o{ interactions : "interacts"
+            users ||--o{ groups : "creates"
+            users ||--o{ members : "belongs_to"
+            users ||--o{ chats : "sends"
+            users ||--o{ schedules : "manages"
+            
+            materials ||--o{ interactions : "has"
+            groups ||--o{ members : "has_members"
+            groups ||--o{ chats : "has_messages"
+            groups ||--o{ schedules : "has_events"
+            interactions ||--o{ interactions : "parent_of"
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. 핵심 테이블 상세 설계</h2>
+        
+        <h3>📊 interactions (통합 상호작용)</h3>
+        <p>댓글, 오답노트, 좋아요를 한 테이블에서 관리하며 대댓글 구조를 지원합니다.</p>
+        <table>
+            <tr><th>컬럼명</th><th>타입</th><th>속성</th><th>설명</th></tr>
+            <tr><td>id</td><td>int</td><td><span class="badge pk">PK</span></td><td>식별자</td></tr>
+            <tr><td>material_id</td><td>int</td><td><span class="badge fk">FK</span> <span class="badge idx">INDEX</span></td><td>대상 학업 자료</td></tr>
+            <tr><td>parent_id</td><td>int</td><td><span class="badge fk">FK</span></td><td>부모 상호작용 (대댓글용)</td></tr>
+            <tr><td>type</td><td>varchar</td><td><span class="badge idx">INDEX</span></td><td>COMMENT, NOTE, LIKE 구분</td></tr>
+        </table>
+
+        <h3>📊 schedules (통합 일정)</h3>
+        <p>개인 일정과 그룹 공유 일정을 통합하여 관리합니다.</p>
+        <table>
+            <tr><th>컬럼명</th><th>타입</th><th>속성</th><th>설명</th></tr>
+            <tr><td>id</td><td>int</td><td><span class="badge pk">PK</span></td><td>식별자</td></tr>
+            <tr><td>user_id</td><td>int</td><td><span class="badge fk">FK</span></td><td>소유자</td></tr>
+            <tr><td>group_id</td><td>int</td><td><span class="badge fk">FK</span></td><td>NULL이면 개인, 존재하면 그룹 일정</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>3. dbdiagram.io 전용 DBML 코드</h2>
+        <button class="copy-btn" onclick="copyCode()">코드 복사</button>
+        <div class="code-box" id="dbml-code">
+// [dbdiagram.io 복사용 최종 코드]
+Table users {
+  id int [pk, increment]
+  login_id varchar [unique, not null]
+  email varchar [unique, not null]
+  nickname varchar [not null]
+  status varchar [default: 'ACTIVE']
+}
+
+Table materials {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  category varchar
+  title varchar [not null]
+  status varchar [default: 'PUBLISHED']
+}
+
+Table interactions {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  material_id int [ref: > materials.id]
+  parent_id int [ref: > interactions.id]
+  type varchar [not null]
+  indexes { (material_id, type) }
+}
+
+Table groups {
+  id int [pk, increment]
+  unique_code varchar [unique, not null]
+  name varchar [not null]
+  creator_id int [ref: > users.id]
+}
+
+Table members {
+  group_id int [ref: > groups.id]
+  user_id int [ref: > users.id]
+  role varchar [default: 'MEMBER']
+  indexes { (group_id, user_id) [pk] }
+}
+
+Table chats {
+  id int [pk, increment]
+  group_id int [ref: > groups.id]
+  user_id int [ref: > users.id]
+  message text [not null]
+  indexes { (group_id, sent_at) }
+}
+
+Table schedules {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  group_id int [ref: > groups.id]
+  title varchar [not null]
+  start_at datetime [not null]
+  end_at datetime [not null]
+}
+        </div>
+    </div>
+
+    <script>
+        function copyCode() {
+            const code = document.getElementById('dbml-code').innerText;
+            navigator.clipboard.writeText(code);
+            alert('DBML 코드가 클립보드에 복사되었습니다!');
+        }
+    </script>
+</body>
+</html>
