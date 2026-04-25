@@ -170,9 +170,11 @@ const Game = () => {
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} castShadow />
       
-      <group position={[airplanePos.x, airplanePos.y, 0]} rotation={[0, Math.PI, 0]}>
+      <group position={[airplanePos.x, airplanePos.y, 0]} rotation={[0, 0, 0]}>
         <Airplane position={[0, 0, 0]} />
       </group>
+
+      <gridHelper args={[100, 20, '#ffffff', '#ffffff']} rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -25]} opacity={0.1} transparent />
 
       {rings.map(ring => (
         <Ring key={ring.id} position={ring.pos} onPass={handlePass} />
@@ -184,7 +186,7 @@ const Game = () => {
 
       {/* UI */}
       <Float speed={2} rotationIntensity={0.5}>
-        <Text position={[0, 4, -5]} fontSize={1} color="white" font="/fonts/inter.woff">
+        <Text position={[0, 4, -5]} fontSize={1} color="white">
           SCORE: {score}
         </Text>
       </Float>
@@ -201,28 +203,37 @@ export default function App() {
         <div style={{ 
           position: 'absolute', zIndex: 10, width: '100%', height: '100%', 
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0,0,0,0.5)', color: 'white', fontFamily: 'sans-serif'
+          background: 'rgba(0,0,0,0.8)', color: 'white', fontFamily: 'sans-serif'
         }}>
-          <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>3D AIRPLANE ADVENTURE</h1>
+          <h1 style={{ fontSize: '3rem', marginBottom: '1rem', textAlign: 'center' }}>3D AIRPLANE ADVENTURE</h1>
           <p style={{ marginBottom: '2rem' }}>WASD 또는 화살표 키로 조종하세요!</p>
           <button 
             onClick={() => { setStarted(true); soundEngine.playScore(); }}
             style={{ 
-              padding: '1rem 3rem', fontSize: '1.5rem', cursor: 'pointer', 
-              border: 'none', borderRadius: '1rem', background: '#e74c3c', color: 'white',
-              fontWeight: 'bold'
+              padding: '1.5rem 4rem', fontSize: '1.8rem', cursor: 'pointer', 
+              border: 'none', borderRadius: '1.5rem', background: '#e74c3c', color: 'white',
+              fontWeight: 'bold', boxShadow: '0 10px 20px rgba(0,0,0,0.3)'
             }}
           >
             START GAME
           </button>
+          <p style={{ marginTop: '2rem', opacity: 0.6, fontSize: '0.8rem' }}>화면을 클릭하면 소리가 활성화됩니다</p>
         </div>
       ) : null}
       
-      <Canvas shadows>
+      <Canvas shadows camera={{ position: [0, 0, 10], fov: 75 }}>
+        <color attach="background" args={['#87ceeb']} />
         {started && <Game />}
+        {!started && (
+          <>
+            <Sky sunPosition={[100, 20, 100]} />
+            <ambientLight intensity={0.5} />
+            <Airplane position={[0, 0, 0]} />
+          </>
+        )}
       </Canvas>
       
-      <div style={{ position: 'absolute', bottom: '20px', left: '20px', color: 'white', fontFamily: 'sans-serif', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', bottom: '20px', left: '20px', color: 'white', fontFamily: 'sans-serif', pointerEvents: 'none', zIndex: 5 }}>
         <p><b>조작:</b> WASD / 화살표 키</p>
         <p><b>목표:</b> 황금색 링을 통과하세요!</p>
       </div>
