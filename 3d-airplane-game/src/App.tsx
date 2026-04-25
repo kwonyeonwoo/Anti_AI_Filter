@@ -12,24 +12,29 @@ interface Entity {
   targetId?: number; // For missiles
   burstCount?: number;
   reloadTimer?: number;
+  hp?: number; // Enemy HP
+  hitTimer?: number; // Visual feedback
 }
 
 // --- Airplane Model ---
-const AirplaneModel = ({ color = "#ffffff", isEnemy = false }: { color?: string, isEnemy?: boolean }) => {
+const AirplaneModel = ({ color = "#ffffff", isEnemy = false, isHit = false }: { color?: string, isEnemy?: boolean, isHit?: boolean }) => {
   const propellerRef = useRef<THREE.Group>(null);
   useFrame((_state, delta) => {
     if (propellerRef.current) propellerRef.current.rotation.y += 50 * delta;
   });
 
+  // 피격 시 빨간색으로 깜빡임
+  const bodyColor = isHit ? "#ff0000" : (isEnemy ? color : "#ffffff");
+
   return (
     <group rotation={isEnemy ? [0, 0, 0] : [0, Math.PI, 0]}>
       <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
         <cylinderGeometry args={[0.4, 0.2, 3.5, 16]} />
-        <meshStandardMaterial color={color} metalness={0.7} roughness={0.3} />
+        <meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.3} />
       </mesh>
       <mesh position={[0, 0, -1.75]} rotation={[Math.PI, 0, 0]}>
         <sphereGeometry args={[0.4, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#e0e0e0" />
+        <meshStandardMaterial color={isHit ? "#ff0000" : "#e0e0e0"} />
       </mesh>
       <group position={[0, 0.2, -0.2]}>
         <mesh castShadow><boxGeometry args={[5.5, 0.05, 1.0]} /><meshStandardMaterial color={isEnemy ? "#333" : "#d32f2f"} /></mesh>
@@ -53,7 +58,6 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
   const [state, setState] = useState({ x: 0, y: 0, roll: 0, pitch: 0 });
   const keys = useRef<{ [key: string]: boolean }>({});
   
-  // Entities
   const [bullets, setBullets] = useState<Entity[]>([]);
   const [missiles, setMissiles] = useState<Entity[]>([]);
   const [enemyBullets, setEnemyBullets] = useState<Entity[]>([]);
@@ -76,15 +80,14 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
 
   const fireMissile = () => {
     if (enemies.length === 0) return;
-    // Find closest enemy
     let closest = enemies[0];
     let minDist = Infinity;
     enemies.forEach(e => {
-      const d = e.pos.z; // Enemies are always at z < 0
-      if (Math.abs(d) < minDist) { minDist = Math.abs(d); closest = e; }
+      const d = Math.abs(e.pos.z);
+      if (d < minDist) { minDist = d; closest = e; }
     });
 
-    soundEngine.playScore(); // Missile fire sound
+    soundEngine.playScore();
     setMissiles(prev => [...prev, {
       id: Date.now(),
       pos: new THREE.Vector3(state.x, state.y, -2),
@@ -95,7 +98,7 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
   };
 
   useFrame((clockState, delta) => {
-    // 1. Controls & Auto-fire
+    // 1. Controls
     let targetRoll = 0, targetPitch = 0;
     if (keys.current['a']) targetRoll = 1.0;
     if (keys.current['d']) targetRoll = -1.0;
@@ -108,7 +111,6 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
     const nextY = THREE.MathUtils.clamp(state.y - pitch * 25 * delta, -20, 20);
     setState({ x: nextX, y: nextY, roll, pitch });
 
-    // Machine Gun Auto-fire
     machineGunTimer.current += delta;
     if (machineGunTimer.current > 0.15) {
       setBullets(prev => [...prev, {
@@ -137,7 +139,7 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
         const target = enemies.find(e => e.id === m.targetId);
         if (target) {
           const dir = target.pos.clone().sub(m.pos).normalize();
-          m.velocity.lerp(dir.multiplyScalar(100), 0.1);
+          m.velocity.lerp(dir.multiplyScalar(120), 0.1);
         }
         return { ...m, pos: m.pos.clone().add(m.velocity.clone().multiplyScalar(delta)) };
       });
@@ -159,39 +161,46 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
 
     setEnemies(prev => {
       const updated = prev.map(e => {
-        // Enemy Burst Fire Logic
+        // Reload Time: 1.0s
         e.reloadTimer = (e.reloadTimer || 0) + delta;
         if (e.pos.z < -20 && e.pos.z > -180) {
           if ((e.burstCount || 0) < 3) {
             if (e.reloadTimer > 0.2) {
-              setEnemyBullets(pb => [...pb, { id: Math.random(), pos: e.pos.clone(), velocity: new THREE.Vector3(0, 0, 70) }]);
+              setEnemyBullets(pb => [...pb, { id: Math.random(), pos: e.pos.clone(), velocity: new THREE.Vector3(0, 0, 75) }]);
               e.burstCount = (e.burstCount || 0) + 1;
               e.reloadTimer = 0;
             }
           } else {
-            if (e.reloadTimer > 1.5) { // Reload for 1.5s
+            if (e.reloadTimer > 1.0) { // Reduced from 1.5 to 1.0
               e.burstCount = 0;
               e.reloadTimer = 0;
             }
           }
         }
+        if (e.hitTimer) e.hitTimer -= delta;
         return { ...e, pos: e.pos.clone().add(e.velocity.clone().multiplyScalar(delta)) };
       });
       
       updated.forEach(e => {
-        // Hit by Bullet
+        // Bullet Hit Detection (Needs 2 hits)
         bullets.forEach(b => {
-          if (b.pos.distanceTo(e.pos) < 3) {
-            e.pos.z = 200; b.pos.z = -300;
-            setScore((s: number) => s + 100);
-            setMissileGauge((g: number) => Math.min(5, g + 1));
-            soundEngine.playExplosion();
+          if (b.pos.distanceTo(e.pos) < 3.5) {
+            b.pos.z = -300; // Bullet disappears
+            e.hp = (e.hp || 2) - 1;
+            e.hitTimer = 0.1; // Visual feedback
+            if (e.hp <= 0) {
+              e.pos.z = 200; // Destroyed
+              setScore((s: number) => s + 100);
+              setMissileGauge((g: number) => Math.min(5, g + 1));
+              soundEngine.playExplosion();
+            }
           }
         });
-        // Hit by Missile
+        // Missile Hit Detection (1 hit kill)
         missiles.forEach(m => {
           if (m.pos.distanceTo(e.pos) < 5) {
-            e.pos.z = 200; m.pos.z = -300;
+            m.pos.z = -300; // Missile disappears
+            e.pos.z = 200; // Destroyed
             setScore((s: number) => s + 200);
             setMissileGauge((g: number) => Math.min(5, g + 1));
             soundEngine.playExplosion();
@@ -201,16 +210,17 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
       return updated.filter(e => e.pos.z < 20);
     });
 
-    // 4. World Generation
+    // 4. Generation
     if (clockState.clock.elapsedTime % 1.5 < 0.02) {
       setEnemies(prev => [...prev, {
         id: Date.now(),
         pos: new THREE.Vector3((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 40, -220),
-        velocity: new THREE.Vector3(0, 0, 30 + Math.random() * 20),
-        burstCount: 0, reloadTimer: 0
+        velocity: new THREE.Vector3(0, 0, 30 + Math.random() * 25),
+        burstCount: 0, reloadTimer: 0, hp: 2
       }]);
     }
 
+    // 5. Recovery System
     if (Date.now() - lastHitTime.current > 120000 && hp < 3) {
       setHp((h: number) => h + 1);
       lastHitTime.current = Date.now();
@@ -224,7 +234,7 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
       {bullets.map(b => <mesh key={b.id} position={b.pos}><boxGeometry args={[0.2, 0.2, 1]} /><meshBasicMaterial color="#ffff00" /></mesh>)}
       {missiles.map(m => <mesh key={m.id} position={m.pos} rotation={[Math.PI/2, 0, 0]}><cylinderGeometry args={[0.3, 0.3, 2]} /><meshStandardMaterial color="#00ff00" emissive="#00ff00" /></mesh>)}
       {enemyBullets.map(b => <mesh key={b.id} position={b.pos}><sphereGeometry args={[0.4]} /><meshBasicMaterial color="#ff4400" /></mesh>)}
-      {enemies.map(e => <group key={e.id} position={e.pos}><AirplaneModel color="#333" isEnemy /></group>)}
+      {enemies.map(e => <group key={e.id} position={e.pos}><AirplaneModel color="#333" isEnemy isHit={e.hitTimer! > 0} /></group>)}
       
       <Sky sunPosition={[100, 10, 100]} />
       <Stars radius={200} count={5000} />
@@ -241,7 +251,7 @@ export default function App() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [hp, setHp] = useState(3);
-  const [missileGauge, setMissileGauge] = useState(0); // 0 to 5
+  const [missileGauge, setMissileGauge] = useState(0);
 
   const resetGame = () => {
     setScore(0); setHp(3); setMissileGauge(0); setGameOver(false); setStarted(true);
