@@ -171,7 +171,7 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
               e.reloadTimer = 0;
             }
           } else {
-            if (e.reloadTimer > 1.0) { // Reduced from 1.5 to 1.0
+            if (e.reloadTimer > 2.5) { // Increased to 2.5s
               e.burstCount = 0;
               e.reloadTimer = 0;
             }
