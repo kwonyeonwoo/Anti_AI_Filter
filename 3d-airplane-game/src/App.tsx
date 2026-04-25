@@ -9,6 +9,9 @@ interface Entity {
   id: number;
   pos: THREE.Vector3;
   velocity: THREE.Vector3;
+  targetId?: number; // For missiles
+  burstCount?: number;
+  reloadTimer?: number;
 }
 
 // --- Airplane Model ---
@@ -44,7 +47,7 @@ const AirplaneModel = ({ color = "#ffffff", isEnemy = false }: { color?: string,
 };
 
 // --- Game Engine ---
-const Game = ({ onGameOver, score, setScore, hp, setHp }: any) => {
+const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissileGauge }: any) => {
   const { camera } = useThree();
   const airplaneRef = useRef<THREE.Group>(null);
   const [state, setState] = useState({ x: 0, y: 0, roll: 0, pitch: 0 });
@@ -52,40 +55,47 @@ const Game = ({ onGameOver, score, setScore, hp, setHp }: any) => {
   
   // Entities
   const [bullets, setBullets] = useState<Entity[]>([]);
+  const [missiles, setMissiles] = useState<Entity[]>([]);
   const [enemyBullets, setEnemyBullets] = useState<Entity[]>([]);
   const [enemies, setEnemies] = useState<Entity[]>([]);
   const [clouds, setClouds] = useState<{ id: number, pos: [number, number, number] }[]>([]);
   
-  // Recovery System
   const lastHitTime = useRef(Date.now());
+  const machineGunTimer = useRef(0);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       keys.current[e.key.toLowerCase()] = true;
-      if (e.key === ' ' || e.key === 'Enter') shoot();
+      if (e.key === ' ' && missileGauge >= 5) fireMissile();
     };
     const up = (e: KeyboardEvent) => keys.current[e.key.toLowerCase()] = false;
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
-    window.addEventListener('mousedown', shoot);
-    return () => { 
-      window.removeEventListener('keydown', down); 
-      window.removeEventListener('keyup', up);
-      window.removeEventListener('mousedown', shoot);
-    };
-  }, [state]);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+  }, [missileGauge, enemies]);
 
-  const shoot = () => {
-    soundEngine.playShoot();
-    setBullets(prev => [...prev, {
-      id: Date.now() + Math.random(),
+  const fireMissile = () => {
+    if (enemies.length === 0) return;
+    // Find closest enemy
+    let closest = enemies[0];
+    let minDist = Infinity;
+    enemies.forEach(e => {
+      const d = e.pos.z; // Enemies are always at z < 0
+      if (Math.abs(d) < minDist) { minDist = Math.abs(d); closest = e; }
+    });
+
+    soundEngine.playScore(); // Missile fire sound
+    setMissiles(prev => [...prev, {
+      id: Date.now(),
       pos: new THREE.Vector3(state.x, state.y, -2),
-      velocity: new THREE.Vector3(0, 0, -150)
+      velocity: new THREE.Vector3(0, 0, -80),
+      targetId: closest.id
     }]);
+    setMissileGauge(0);
   };
 
   useFrame((clockState, delta) => {
-    // 1. Controls
+    // 1. Controls & Auto-fire
     let targetRoll = 0, targetPitch = 0;
     if (keys.current['a']) targetRoll = 1.0;
     if (keys.current['d']) targetRoll = -1.0;
@@ -98,6 +108,18 @@ const Game = ({ onGameOver, score, setScore, hp, setHp }: any) => {
     const nextY = THREE.MathUtils.clamp(state.y - pitch * 25 * delta, -20, 20);
     setState({ x: nextX, y: nextY, roll, pitch });
 
+    // Machine Gun Auto-fire
+    machineGunTimer.current += delta;
+    if (machineGunTimer.current > 0.15) {
+      setBullets(prev => [...prev, {
+        id: Math.random(),
+        pos: new THREE.Vector3(nextX, nextY, -2),
+        velocity: new THREE.Vector3(0, 0, -180)
+      }]);
+      soundEngine.playShoot();
+      machineGunTimer.current = 0;
+    }
+
     if (airplaneRef.current) {
       airplaneRef.current.position.set(nextX, nextY, 0);
       airplaneRef.current.rotation.set(pitch, 0, roll, 'XYZ');
@@ -105,44 +127,73 @@ const Game = ({ onGameOver, score, setScore, hp, setHp }: any) => {
 
     // 2. Camera
     camera.position.lerp(new THREE.Vector3(nextX + roll * 4, nextY + 2.5 + pitch * 1.5, 10), 0.12);
-    camera.lookAt(nextX, nextY, -30);
-    camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, -roll * 0.4, 0.1);
+    camera.lookAt(nextX, nextY, -40);
 
-    // 3. Bullets Update
-    setBullets(prev => prev.map(b => ({ ...b, pos: b.pos.clone().add(b.velocity.clone().multiplyScalar(delta)) })).filter(b => b.pos.z > -200));
+    // 3. Entity Updates
+    setBullets(prev => prev.map(b => ({ ...b, pos: b.pos.clone().add(b.velocity.clone().multiplyScalar(delta)) })).filter(b => b.pos.z > -250));
+    
+    setMissiles(prev => {
+      const updated = prev.map(m => {
+        const target = enemies.find(e => e.id === m.targetId);
+        if (target) {
+          const dir = target.pos.clone().sub(m.pos).normalize();
+          m.velocity.lerp(dir.multiplyScalar(100), 0.1);
+        }
+        return { ...m, pos: m.pos.clone().add(m.velocity.clone().multiplyScalar(delta)) };
+      });
+      return updated.filter(m => m.pos.z > -250);
+    });
+
     setEnemyBullets(prev => {
       const updated = prev.map(b => ({ ...b, pos: b.pos.clone().add(b.velocity.clone().multiplyScalar(delta)) }));
-      // Player Hit Detection
       updated.forEach(b => {
-        const dist = b.pos.distanceTo(new THREE.Vector3(nextX, nextY, 0));
-        if (dist < 1.5) {
+        if (b.pos.distanceTo(new THREE.Vector3(nextX, nextY, 0)) < 1.8) {
           setHp((h: number) => Math.max(0, h - 1));
           lastHitTime.current = Date.now();
           soundEngine.playCrash();
-          b.pos.z = 100; // Remove bullet
+          b.pos.z = 100;
         }
       });
       return updated.filter(b => b.pos.z < 20);
     });
 
-    // 4. Enemies Update
     setEnemies(prev => {
-      const updated = prev.map(e => ({ ...e, pos: e.pos.clone().add(e.velocity.clone().multiplyScalar(delta)) }));
-      // Enemy Shooting Logic
-      updated.forEach(e => {
-        if (Math.random() > 0.985 && e.pos.z < -20) {
-          setEnemyBullets(pb => [...pb, {
-            id: Math.random(),
-            pos: e.pos.clone(),
-            velocity: new THREE.Vector3(0, 0, 60)
-          }]);
+      const updated = prev.map(e => {
+        // Enemy Burst Fire Logic
+        e.reloadTimer = (e.reloadTimer || 0) + delta;
+        if (e.pos.z < -20 && e.pos.z > -180) {
+          if ((e.burstCount || 0) < 3) {
+            if (e.reloadTimer > 0.2) {
+              setEnemyBullets(pb => [...pb, { id: Math.random(), pos: e.pos.clone(), velocity: new THREE.Vector3(0, 0, 70) }]);
+              e.burstCount = (e.burstCount || 0) + 1;
+              e.reloadTimer = 0;
+            }
+          } else {
+            if (e.reloadTimer > 1.5) { // Reload for 1.5s
+              e.burstCount = 0;
+              e.reloadTimer = 0;
+            }
+          }
         }
-        // Collision with Player Bullets
+        return { ...e, pos: e.pos.clone().add(e.velocity.clone().multiplyScalar(delta)) };
+      });
+      
+      updated.forEach(e => {
+        // Hit by Bullet
         bullets.forEach(b => {
-          if (b.pos.distanceTo(e.pos) < 2.5) {
-            e.pos.z = 200; // Kill enemy
-            b.pos.z = -300; // Remove bullet
+          if (b.pos.distanceTo(e.pos) < 3) {
+            e.pos.z = 200; b.pos.z = -300;
             setScore((s: number) => s + 100);
+            setMissileGauge((g: number) => Math.min(5, g + 1));
+            soundEngine.playExplosion();
+          }
+        });
+        // Hit by Missile
+        missiles.forEach(m => {
+          if (m.pos.distanceTo(e.pos) < 5) {
+            e.pos.z = 200; m.pos.z = -300;
+            setScore((s: number) => s + 200);
+            setMissileGauge((g: number) => Math.min(5, g + 1));
             soundEngine.playExplosion();
           }
         });
@@ -150,42 +201,35 @@ const Game = ({ onGameOver, score, setScore, hp, setHp }: any) => {
       return updated.filter(e => e.pos.z < 20);
     });
 
-    // 5. World Generation
-    if (clockState.clock.elapsedTime % 2.0 < 0.02) {
+    // 4. World Generation
+    if (clockState.clock.elapsedTime % 1.5 < 0.02) {
       setEnemies(prev => [...prev, {
         id: Date.now(),
-        pos: new THREE.Vector3((Math.random() - 0.5) * 50, (Math.random() - 0.5) * 30, -200),
-        velocity: new THREE.Vector3(0, 0, 25 + Math.random() * 20)
+        pos: new THREE.Vector3((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 40, -220),
+        velocity: new THREE.Vector3(0, 0, 30 + Math.random() * 20),
+        burstCount: 0, reloadTimer: 0
       }]);
     }
-    if (clockState.clock.elapsedTime % 0.5 < 0.02) {
-      setClouds(prev => [...prev.map(c => ({...c, pos: [c.pos[0], c.pos[1], c.pos[2] + 40 * delta] as [number, number, number]})).filter(c => c.pos[2] < 50), 
-        { id: Math.random(), pos: [(Math.random() - 0.5) * 150, (Math.random() - 0.5) * 100, -250] }
-      ]);
-    }
 
-    // 6. Recovery System (120 seconds = 120000ms)
     if (Date.now() - lastHitTime.current > 120000 && hp < 3) {
       setHp((h: number) => h + 1);
-      lastHitTime.current = Date.now(); // Reset timer for next recovery
+      lastHitTime.current = Date.now();
     }
-
     if (hp <= 0) onGameOver();
-    if (Math.random() > 0.98) soundEngine.playEngine();
   });
 
   return (
     <>
       <group ref={airplaneRef}><AirplaneModel /></group>
-      {bullets.map(b => <mesh key={b.id} position={b.pos}><sphereGeometry args={[0.2]} /><meshBasicMaterial color="#ffff00" /></mesh>)}
-      {enemyBullets.map(b => <mesh key={b.id} position={b.pos}><sphereGeometry args={[0.3]} /><meshBasicMaterial color="#ff0000" /></mesh>)}
-      {enemies.map(e => <group key={e.id} position={e.pos}><AirplaneModel color="#444" isEnemy /></group>)}
-      {clouds.map(c => <mesh key={c.id} position={c.pos}><sphereGeometry args={[5, 8, 8]} /><meshStandardMaterial color="white" transparent opacity={0.1} /></mesh>)}
+      {bullets.map(b => <mesh key={b.id} position={b.pos}><boxGeometry args={[0.2, 0.2, 1]} /><meshBasicMaterial color="#ffff00" /></mesh>)}
+      {missiles.map(m => <mesh key={m.id} position={m.pos} rotation={[Math.PI/2, 0, 0]}><cylinderGeometry args={[0.3, 0.3, 2]} /><meshStandardMaterial color="#00ff00" emissive="#00ff00" /></mesh>)}
+      {enemyBullets.map(b => <mesh key={b.id} position={b.pos}><sphereGeometry args={[0.4]} /><meshBasicMaterial color="#ff4400" /></mesh>)}
+      {enemies.map(e => <group key={e.id} position={e.pos}><AirplaneModel color="#333" isEnemy /></group>)}
       
       <Sky sunPosition={[100, 10, 100]} />
       <Stars radius={200} count={5000} />
       <Environment preset="city" />
-      <gridHelper args={[1000, 50, '#222', '#111']} rotation={[Math.PI / 2, 0, 0]} position={[0, -40, -200]} />
+      <gridHelper args={[1000, 60, '#222', '#111']} rotation={[Math.PI / 2, 0, 0]} position={[0, -45, -200]} />
       <ambientLight intensity={0.4} />
       <directionalLight position={[10, 30, 10]} intensity={2} />
     </>
@@ -197,12 +241,10 @@ export default function App() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [hp, setHp] = useState(3);
+  const [missileGauge, setMissileGauge] = useState(0); // 0 to 5
 
   const resetGame = () => {
-    setScore(0);
-    setHp(3);
-    setGameOver(false);
-    setStarted(true);
+    setScore(0); setHp(3); setMissileGauge(0); setGameOver(false); setStarted(true);
   };
 
   return (
@@ -210,8 +252,7 @@ export default function App() {
       {(!started || gameOver) && (
         <div style={{ position: 'absolute', zIndex: 10, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.9)' }}>
           <h1 style={{ fontSize: '6rem', fontStyle: 'italic', color: '#d32f2f' }}>{gameOver ? 'MISSION FAILED' : 'SKY ACE: COMBAT'}</h1>
-          {gameOver && <h2 style={{ fontSize: '3rem' }}>SCORE: {score}</h2>}
-          <p style={{ letterSpacing: '5px', marginBottom: '50px' }}>{gameOver ? '적의 총탄에 격추당했습니다' : '적기를 격추하고 생존하세요!'}</p>
+          <p style={{ letterSpacing: '5px', marginBottom: '50px' }}>{gameOver ? `FINAL SCORE: ${score}` : '적기를 격추하고 미사일을 충전하세요!'}</p>
           <button onClick={resetGame} style={{ padding: '1.5rem 5rem', fontSize: '2rem', cursor: 'pointer', border: '3px solid white', background: 'transparent', color: 'white', fontWeight: 900 }}>
             {gameOver ? 'RETRY MISSION' : 'ENGAGE ENEMY'}
           </button>
@@ -221,23 +262,30 @@ export default function App() {
       {started && !gameOver && (
         <>
           <div style={{ position: 'absolute', top: '40px', left: '40px', zIndex: 5 }}>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
               {[...Array(3)].map((_, i) => (
-                <div key={i} style={{ width: '40px', height: '40px', background: i < hp ? '#d32f2f' : '#333', borderRadius: '50%', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                <div key={i} style={{ width: '45px', height: '45px', background: i < hp ? '#d32f2f' : '#222', borderRadius: '50%', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
                   {i < hp ? '❤' : '×'}
                 </div>
               ))}
             </div>
-            <h2 style={{ fontSize: '2.5rem', margin: 0, color: '#f1c40f' }}>{String(score).padStart(6, '0')}</h2>
+            <h2 style={{ fontSize: '3rem', margin: 0, color: '#f1c40f' }}>{String(score).padStart(6, '0')}</h2>
           </div>
-          <div style={{ position: 'absolute', bottom: '20px', width: '100%', textAlign: 'center', opacity: 0.5, fontSize: '0.9rem' }}>
-            WASD: 조종 | SPACE/CLICK: 사격 | 120초간 무피격 시 체력 회복
+
+          <div style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', width: '300px', zIndex: 5 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+              <span>HOMING MISSILE</span>
+              <span style={{ color: missileGauge === 5 ? '#00ff00' : 'white' }}>{missileGauge === 5 ? 'READY (SPACE)' : `${missileGauge * 20}%`}</span>
+            </div>
+            <div style={{ width: '100%', height: '15px', background: '#222', borderRadius: '10px', overflow: 'hidden', border: '2px solid #444' }}>
+              <div style={{ width: `${missileGauge * 20}%`, height: '100%', background: missileGauge === 5 ? '#00ff00' : '#3498db', transition: 'all 0.3s' }} />
+            </div>
           </div>
         </>
       )}
 
       <Canvas shadows>
-        {started && !gameOver && <Game score={score} setScore={setScore} hp={hp} setHp={setHp} onGameOver={() => setGameOver(true)} />}
+        {started && !gameOver && <Game score={score} setScore={setScore} hp={hp} setHp={setHp} missileGauge={missileGauge} setMissileGauge={setMissileGauge} onGameOver={() => setGameOver(true)} />}
       </Canvas>
     </div>
   );
