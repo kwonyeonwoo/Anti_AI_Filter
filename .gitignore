@@ -15,12 +15,30 @@ dist/
 
 # Environment variables (CRITICAL)
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 .env.image-organizer
 Netlify_Env_Settings.txt
+
+# Project-specific exclusions
+image-organizer/dev/
+image-organizer/server/
+image-organizer/static/
+image-organizer/types/
+image-organizer/*.json
+image-organizer/turbopack
+
+# Sensitive Scripts & Temporary Files
+inspect_db.js
+migrate_data.js
+force_migrate.js
+final_migrate.js
+list_schedules.js
+*.skill
+workspace-master-skill/
 
 # OS metadata
 .DS_Store
@@ -29,3 +47,7 @@ Thumbs.db
 # IDE settings
 .vscode/
 .idea/
+
+# Logs
+*.log
+npm-debug.log*
