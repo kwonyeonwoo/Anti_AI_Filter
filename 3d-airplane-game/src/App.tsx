@@ -9,11 +9,11 @@ interface Entity {
   id: number;
   pos: THREE.Vector3;
   velocity: THREE.Vector3;
-  targetId?: number; // For missiles
+  targetId?: number; 
   burstCount?: number;
   reloadTimer?: number;
-  hp?: number; // Enemy HP
-  hitTimer?: number; // Visual feedback
+  hp?: number; 
+  hitTimer?: number; 
 }
 
 // --- Airplane Model ---
@@ -23,29 +23,28 @@ const AirplaneModel = ({ color = "#ffffff", isEnemy = false, isHit = false }: { 
     if (propellerRef.current) propellerRef.current.rotation.y += 50 * delta;
   });
 
-  // 피격 시 빨간색으로 깜빡임
   const bodyColor = isHit ? "#ff0000" : (isEnemy ? color : "#ffffff");
 
   return (
     <group rotation={isEnemy ? [0, 0, 0] : [0, Math.PI, 0]}>
       <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
-        <cylinderGeometry args={[0.4, 0.2, 3.5, 16]} />
+        <cylinderGeometry args={[0.5, 0.3, 3.5, 16]} />
         <meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.3} />
       </mesh>
       <mesh position={[0, 0, -1.75]} rotation={[Math.PI, 0, 0]}>
-        <sphereGeometry args={[0.4, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <sphereGeometry args={[0.5, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color={isHit ? "#ff0000" : "#e0e0e0"} />
       </mesh>
       <group position={[0, 0.2, -0.2]}>
-        <mesh castShadow><boxGeometry args={[5.5, 0.05, 1.0]} /><meshStandardMaterial color={isEnemy ? "#333" : "#d32f2f"} /></mesh>
+        <mesh castShadow><boxGeometry args={[6.0, 0.05, 1.2]} /><meshStandardMaterial color={isEnemy ? "#333" : "#d32f2f"} /></mesh>
       </group>
       <group position={[0, 0, 1.4]}>
-        <mesh><boxGeometry args={[1.8, 0.05, 0.6]} /><meshStandardMaterial color={isEnemy ? "#333" : "#d32f2f"} /></mesh>
-        <mesh position={[0, 0.45, 0]}><boxGeometry args={[0.05, 0.9, 0.6]} /><meshStandardMaterial color={isEnemy ? "#333" : "#d32f2f"} /></mesh>
+        <mesh><boxGeometry args={[2.0, 0.05, 0.8]} /><meshStandardMaterial color={isEnemy ? "#333" : "#d32f2f"} /></mesh>
+        <mesh position={[0, 0.45, 0]}><boxGeometry args={[0.05, 1.0, 0.8]} /><meshStandardMaterial color={isEnemy ? "#333" : "#d32f2f"} /></mesh>
       </group>
       <group ref={propellerRef} position={[0, 0, -1.9]}>
-        <mesh><boxGeometry args={[3.2, 0.12, 0.02]} /><meshStandardMaterial color="#111" /></mesh>
-        <mesh rotation={[0, 0, Math.PI / 2]}><boxGeometry args={[3.2, 0.12, 0.02]} /><meshStandardMaterial color="#111" /></mesh>
+        <mesh><boxGeometry args={[3.5, 0.15, 0.02]} /><meshStandardMaterial color="#111" /></mesh>
+        <mesh rotation={[0, 0, Math.PI / 2]}><boxGeometry args={[3.5, 0.15, 0.02]} /><meshStandardMaterial color="#111" /></mesh>
       </group>
     </group>
   );
@@ -107,8 +106,8 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
 
     const roll = THREE.MathUtils.lerp(state.roll, targetRoll, 0.1);
     const pitch = THREE.MathUtils.lerp(state.pitch, targetPitch, 0.1);
-    const nextX = THREE.MathUtils.clamp(state.x - roll * 30 * delta, -35, 35);
-    const nextY = THREE.MathUtils.clamp(state.y - pitch * 25 * delta, -20, 20);
+    const nextX = THREE.MathUtils.clamp(state.x - roll * 32 * delta, -35, 35);
+    const nextY = THREE.MathUtils.clamp(state.y - pitch * 26 * delta, -20, 20);
     setState({ x: nextX, y: nextY, roll, pitch });
 
     machineGunTimer.current += delta;
@@ -128,7 +127,7 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
     }
 
     // 2. Camera
-    camera.position.lerp(new THREE.Vector3(nextX + roll * 4, nextY + 2.5 + pitch * 1.5, 10), 0.12);
+    camera.position.lerp(new THREE.Vector3(nextX + roll * 4, nextY + 3 + pitch * 1.5, 10), 0.12);
     camera.lookAt(nextX, nextY, -40);
 
     // 3. Entity Updates
@@ -139,7 +138,7 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
         const target = enemies.find(e => e.id === m.targetId);
         if (target) {
           const dir = target.pos.clone().sub(m.pos).normalize();
-          m.velocity.lerp(dir.multiplyScalar(120), 0.1);
+          m.velocity.lerp(dir.multiplyScalar(120), 0.15);
         }
         return { ...m, pos: m.pos.clone().add(m.velocity.clone().multiplyScalar(delta)) };
       });
@@ -149,7 +148,8 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
     setEnemyBullets(prev => {
       const updated = prev.map(b => ({ ...b, pos: b.pos.clone().add(b.velocity.clone().multiplyScalar(delta)) }));
       updated.forEach(b => {
-        if (b.pos.distanceTo(new THREE.Vector3(nextX, nextY, 0)) < 1.8) {
+        // Player Hit Detection
+        if (Math.abs(b.pos.x - nextX) < 1.5 && Math.abs(b.pos.y - nextY) < 1.5 && Math.abs(b.pos.z - 0) < 2) {
           setHp((h: number) => Math.max(0, h - 1));
           lastHitTime.current = Date.now();
           soundEngine.playCrash();
@@ -161,7 +161,6 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
 
     setEnemies(prev => {
       const updated = prev.map(e => {
-        // Reload Time: 1.0s
         e.reloadTimer = (e.reloadTimer || 0) + delta;
         if (e.pos.z < -20 && e.pos.z > -180) {
           if ((e.burstCount || 0) < 3) {
@@ -171,36 +170,36 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
               e.reloadTimer = 0;
             }
           } else {
-            if (e.reloadTimer > 2.5) { // Increased to 2.5s
+            if (e.reloadTimer > 2.5) { 
               e.burstCount = 0;
               e.reloadTimer = 0;
             }
           }
         }
-        if (e.hitTimer) e.hitTimer -= delta;
+        if (e.hitTimer && e.hitTimer > 0) e.hitTimer -= delta;
         return { ...e, pos: e.pos.clone().add(e.velocity.clone().multiplyScalar(delta)) };
       });
       
       updated.forEach(e => {
-        // Bullet Hit Detection (Needs 2 hits)
+        // Bullet Hit Detection (Improved Box Collision)
         bullets.forEach(b => {
-          if (b.pos.distanceTo(e.pos) < 3.5) {
-            b.pos.z = -300; // Bullet disappears
+          if (Math.abs(b.pos.x - e.pos.x) < 3.5 && Math.abs(b.pos.y - e.pos.y) < 2.0 && Math.abs(b.pos.z - e.pos.z) < 5.0) {
+            b.pos.z = -300; 
             e.hp = (e.hp || 2) - 1;
-            e.hitTimer = 0.1; // Visual feedback
+            e.hitTimer = 0.15; 
             if (e.hp <= 0) {
-              e.pos.z = 200; // Destroyed
+              e.pos.z = 200; 
               setScore((s: number) => s + 100);
               setMissileGauge((g: number) => Math.min(5, g + 1));
               soundEngine.playExplosion();
             }
           }
         });
-        // Missile Hit Detection (1 hit kill)
+        // Missile Hit Detection (Larger Radius)
         missiles.forEach(m => {
-          if (m.pos.distanceTo(e.pos) < 5) {
-            m.pos.z = -300; // Missile disappears
-            e.pos.z = 200; // Destroyed
+          if (Math.abs(m.pos.x - e.pos.x) < 5.0 && Math.abs(m.pos.y - e.pos.y) < 4.0 && Math.abs(m.pos.z - e.pos.z) < 6.0) {
+            m.pos.z = -300; 
+            e.pos.z = 200; 
             setScore((s: number) => s + 200);
             setMissileGauge((g: number) => Math.min(5, g + 1));
             soundEngine.playExplosion();
@@ -210,17 +209,15 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
       return updated.filter(e => e.pos.z < 20);
     });
 
-    // 4. Generation
     if (clockState.clock.elapsedTime % 1.5 < 0.02) {
       setEnemies(prev => [...prev, {
         id: Date.now(),
-        pos: new THREE.Vector3((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 40, -220),
+        pos: new THREE.Vector3((Math.random() - 0.5) * 65, (Math.random() - 0.5) * 45, -220),
         velocity: new THREE.Vector3(0, 0, 30 + Math.random() * 25),
-        burstCount: 0, reloadTimer: 0, hp: 2
+        burstCount: 0, reloadTimer: 0, hp: 2, hitTimer: 0
       }]);
     }
 
-    // 5. Recovery System
     if (Date.now() - lastHitTime.current > 120000 && hp < 3) {
       setHp((h: number) => h + 1);
       lastHitTime.current = Date.now();
@@ -231,9 +228,9 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
   return (
     <>
       <group ref={airplaneRef}><AirplaneModel /></group>
-      {bullets.map(b => <mesh key={b.id} position={b.pos}><boxGeometry args={[0.2, 0.2, 1]} /><meshBasicMaterial color="#ffff00" /></mesh>)}
-      {missiles.map(m => <mesh key={m.id} position={m.pos} rotation={[Math.PI/2, 0, 0]}><cylinderGeometry args={[0.3, 0.3, 2]} /><meshStandardMaterial color="#00ff00" emissive="#00ff00" /></mesh>)}
-      {enemyBullets.map(b => <mesh key={b.id} position={b.pos}><sphereGeometry args={[0.4]} /><meshBasicMaterial color="#ff4400" /></mesh>)}
+      {bullets.map(b => <mesh key={b.id} position={b.pos}><boxGeometry args={[0.3, 0.3, 2]} /><meshBasicMaterial color="#ffff00" /></mesh>)}
+      {missiles.map(m => <mesh key={m.id} position={m.pos} rotation={[Math.PI/2, 0, 0]}><cylinderGeometry args={[0.5, 0.5, 3]} /><meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={2} /></mesh>)}
+      {enemyBullets.map(b => <mesh key={b.id} position={b.pos}><sphereGeometry args={[0.5]} /><meshBasicMaterial color="#ff2200" /></mesh>)}
       {enemies.map(e => <group key={e.id} position={e.pos}><AirplaneModel color="#333" isEnemy isHit={e.hitTimer! > 0} /></group>)}
       
       <Sky sunPosition={[100, 10, 100]} />
