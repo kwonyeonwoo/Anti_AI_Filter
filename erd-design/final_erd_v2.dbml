@@ -1,0 +1,108 @@
+// [dbdiagram.io 전용 DBML 코드 - 학업 커뮤니티 최종 최적화 7개 테이블 버전]
+// 정규화(3NF) 및 성능(인덱스), 확장성(Soft Delete, 대댓글)이 반영된 최종본입니다.
+
+// [1] 사용자 (Users)
+Table users {
+  id int [pk, increment]
+  login_id varchar [unique, not null]
+  email varchar [unique, not null]
+  password_hash varchar [not null]
+  nickname varchar [not null]
+  identity_info varchar [note: '학업/신분 증명 정보']
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, SUSPENDED, DELETED']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete 용']
+}
+
+// [2] 학업 자료 (Materials)
+Table materials {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  category varchar [note: '전공, 교양 등 카테고리']
+  title varchar [not null]
+  content text
+  file_url varchar
+  view_count int [default: 0]
+  status varchar [default: 'PUBLISHED', note: 'DRAFT, PUBLISHED, ARCHIVED']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete 용']
+}
+
+// [3] 통합 상호작용 (Interactions)
+Table interactions {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  material_id int [ref: > materials.id]
+  parent_id int [ref: > interactions.id, note: '대댓글 및 계층형 구조 지원']
+  content text [note: 'LIKE 타입일 경우 null']
+  type varchar [not null, note: 'COMMENT, NOTE, LIKE 구분']
+  is_public boolean [default: true, note: '오답노트 공개 여부']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete 용']
+
+  indexes {
+    (material_id, type) [note: '필터링 최적화']
+  }
+}
+
+// [4] 스터디 그룹 (Groups)
+Table groups {
+  id int [pk, increment]
+  unique_code varchar [unique, not null]
+  name varchar [not null]
+  description text
+  max_members int [default: 50]
+  creator_id int [ref: > users.id]
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, CLOSED']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete 용']
+}
+
+// [5] 그룹 멤버 (Members)
+Table members {
+  group_id int [ref: > groups.id]
+  user_id int [ref: > users.id]
+  role varchar [default: 'MEMBER', note: 'OWNER, ADMIN, MEMBER']
+  status varchar [default: 'ACTIVE', note: 'ACTIVE, PENDING, BANNED']
+  joined_at timestamp [default: `now()`]
+  deleted_at timestamp [note: '그룹 탈퇴 정보 보존']
+
+  indexes {
+    (group_id, user_id) [pk]
+  }
+}
+
+// [6] 그룹 채팅 (Chats)
+Table chats {
+  id int [pk, increment]
+  group_id int [ref: > groups.id]
+  user_id int [ref: > users.id]
+  message text [not null]
+  message_type varchar [default: 'TEXT', note: 'TEXT, IMAGE, FILE']
+  sent_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete 용']
+
+  indexes {
+    (group_id, sent_at) [note: '페이지네이션 최적화']
+  }
+}
+
+// [7] 통합 일정 (Schedules)
+Table schedules {
+  id int [pk, increment]
+  user_id int [ref: > users.id, note: '개인일정 소유자']
+  group_id int [ref: > groups.id, note: 'null이면 개인일정, 값이 있으면 그룹 공유일정']
+  title varchar [not null]
+  description text
+  location varchar
+  is_all_day boolean [default: false]
+  start_at datetime [not null]
+  end_at datetime [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [note: 'Soft delete 용']
+}

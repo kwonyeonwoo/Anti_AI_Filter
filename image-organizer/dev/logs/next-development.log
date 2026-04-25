@@ -1,0 +1,3 @@
+{"timestamp":"00:00:01.807","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:25:06.573","source":"Server","level":"LOG","message":"  Reload env: .env"}
+{"timestamp":"00:25:12.533","source":"Server","level":"LOG","message":"  Reload env: .env"}

@@ -1,33 +1,39 @@
-# Project Context & Progress (Synced)
+# Project Context & Progress (Last Sync: 2026-04-25)
 
-이 파일은 Gemini CLI 에이전트가 프로젝트의 맥락을 유지하기 위한 가이드라인입니다. 새로운 세션 시작 시 반드시 이 파일을 읽고 이전 상태를 복구하십시오.
+이 파일은 기기 간 세션 이동 및 맥락 유지를 위해 Gemini CLI가 자동으로 관리합니다.
 
-## 📂 Project Categorization
-### 1. Anti-AI Filter Web
-- **Description:** React + FastAPI 기반 AI 보호 웹 서비스.
-- **Key Tech:** JND(Just Noticeable Difference) 마스킹, EoT(Expectation over Transformation) 압축 저항성 노이즈, ResNet50 심층 레이어 타격.
-- **Current Status:** [성공] v9.0 Ultimate 필터 적용 완료. 시각적 품질 99/100 유지 및 AI 학습 방해율 100% 목표 달성. 
-- **Subprocess Logic:** A(방법고안) - B(검증/반박) - C(최종심사) 논의 파이프라인을 통해 JND-EoT 하이브리드 알고리즘 도출.
-- **Backend (HF):** `https://huggingface.co/spaces/onyeonwoo/Anti_AI_Filter` (v9.0 Running)
-- **Next Step:** 사용자 피드백 기반 미세 조정 및 서비스 유지보수.
+## 🌟 Last Session Highlights (2026-04-25)
+- **Scheduler v2:** 팀 통합 달력 런칭, 80시간 캡핑 표시 버그 수정, 새 계정 데이터 이전 완료, 모바일 위젯(/widget) 지원.
+- **Image Organizer:** 다중 이미지 선택 드래그 앤 드롭 기능 고도화 및 배포 완료.
+- **Gemini CLI:** `workspace-master` 종합 관리 스킬 생성 및 설치. 보안 감사 수행.
 
-### 3. Academic Community ERD Design (Final Decision)
-- **Description:** 학업 자료 공유 및 일정 관리 커뮤니티를 위한 DB 설계.
-- **Current Status:** [성공] 최종 7개 테이블 최적화 및 명세서 구축 완료.
-- **Architecture Rationale:** 
-    - **Interactions 병합:** Likes, Comments, Notes를 하나의 테이블로 통합하여 관리 효율성 극대화.
-    - **Performance:** `interactions(material_id, type)`, `chats(group_id, sent_at)` 복합 인덱스 설계 반영.
-    - **Scalability:** 모든 테이블에 Soft Delete(`deleted_at`) 정책 적용 및 `parent_id`를 이용한 계층형 댓글 구조 지원.
-- **Key Deliverables:**
-    - `final_erd_v2.dbml`: dbdiagram.io용 최종 코드.
-    - `FINAL_ERD_SPEC.html`: 브라우저 기반 통합 시각화 명세서.
-    - `pipeline/erd_pipeline_v2.py`: Planner-Reviewer 자동 최적화 파이프라인.
-- **Next Step:** 확정된 스키마를 바탕으로 API 설계 및 데이터베이스 서버 초기 구축.
+## 📂 Active Projects
+
+### 1. Scheduler v2 (Next.js + Firebase)
+- **Repo:** `https://github.com/kwonyeonwoo/Scheduler.git`
+- **Current Version:** v2.4 (Team Calendar & Widget Support)
+- **Key Features:**
+    - Firebase Auth (Email/PW & ID-based login) 기반 로그인.
+    - 실시간 클라우드 동기화 (onSnapshot).
+    - **[신규] 팀 통합 달력:** 모든 팀원의 일자별 근무 시간을 한눈에 확인 가능.
+    - **[개선] 달력 로직:** 월 이동 시 날짜 오버플로 해결 및 80시간 캡핑 시 실제 시간 유지 표시.
+    - **[신규] 모바일 위젯:** `/widget` 경로를 통한 바탕화면 전용 뷰 지원.
+- **Status:** [성공] 주요 버그 수정 및 팀 협업 기능 강화 완료.
+
+### 2. Image Organizer (Next.js + Firebase/Cloudinary)
+- **Repo:** `https://github.com/kwonyeonwoo/image-organizer.git`
+- **Status:** [완료] 다중 이미지 드래그 앤 드롭 고도화 및 배포 완료.
+- **Key Features:**
+    - **[신규] 다중 이동:** 선택 모드에서 여러 이미지를 한꺼번에 폴더로 이동 가능.
+    - **[개선] 드래그 피드백:** 드래그 시 이동 중인 이미지 개수 표시.
+
+### 3. Scheduler Mobile (React Native/Expo) - [임시 중단]
+- **Status:** SDK 55 기반 런타임 최적화 중이며, 현재는 웹 버전 고도화에 집중.
 
 ## 🛠 Active Configurations
-- **ERD Design:** `ERD_DBML_Code.txt` (최종 7개 테이블 DBML 코드 저장됨).
-- **Subprocess API:** `Gemini_CLI_Subprocess_API.md` 참고.
+- **Environment Variables:** `.env.image-organizer` 및 `scheduler-v2/.env.local` 파일에 최신 API 키가 보관됨 (로컬 전용).
 
-## 💡 Agent Instructions
-- "ERD 작업" 요청 시 반드시 `ERD_DBML_Code.txt`의 **7개 테이블 통합 버전**을 참조할 것.
-- 모든 작업 완료 후 실시간 동기화를 위해 git 작업을 수행할 것. (git add/commit/push)
+## 💡 Machine-to-Machine Sync Instructions
+1. 다른 기기에서 `git clone` 후, 로컬에만 보관된 `.env` 파일들을 수동으로 복사하십시오.
+2. `GEMINI.md`를 최우선으로 읽어 현재 진행 상황을 즉시 복구하십시오.
+3. 모든 코드 수정 완료 시 제가 자동으로 `git push`를 수행합니다.

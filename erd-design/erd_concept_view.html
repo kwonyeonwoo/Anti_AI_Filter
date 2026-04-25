@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>학업 커뮤니티 개념적 ERD (연결선 완벽 수정본)</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .canvas { background-color: white; border: 2px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.2); border-radius: 8px; }
+        text { font-size: 12px; font-weight: bold; pointer-events: none; fill: #333; text-anchor: middle; }
+        .key { text-decoration: underline; fill: #d32f2f; }
+        .entity { fill: #f8cecc; stroke: #b85450; stroke-width: 2.5; }
+        .relationship { fill: #ffffff; stroke: #82b366; stroke-width: 2.5; }
+        .attribute { fill: #fff2cc; stroke: #d6b656; stroke-width: 1.2; }
+        .line { stroke: #555; stroke-width: 1.8; fill: none; }
+        .label { font-size: 15px; fill: #1a73e8; font-weight: 900; }
+        .recursive-path { stroke: #82b366; stroke-width: 2; fill: none; stroke-dasharray: 3; }
+    </style>
+</head>
+<body>
+    <div class="title-box" style="text-align: center; margin-bottom: 15px;">
+        <h1>최종 통합 개념적 ERD (연결선 오류 수정)</h1>
+        <p>개인관리(User-Schedule) 및 그룹공유(Group-Schedule) 관계 연결 완료</p>
+    </div>
+    
+    <svg width="1300" height="900" class="canvas">
+        <!-- 1. RELATIONSHIP LINES -->
+        <!-- User - Upload - Material (1:n) -->
+        <line x1="250" y1="200" x2="330" y2="200" class="line" />
+        <line x1="470" y1="200" x2="550" y2="200" class="line" />
+        
+        <!-- User - Interact - Material (1:n) -->
+        <path d="M 250,230 Q 400,320 550,230" class="line" />
+        <polygon points="400,265 440,285 400,305 360,285" class="relationship" />
+        <text x="400" y="290">상호작용</text>
+        <path d="M 440,285 C 500,285 500,350 420,300" class="recursive-path" />
+
+        <!-- User - Belong - Group (n:m) -->
+        <line x1="200" y1="260" x2="200" y2="380" class="line" />
+        <line x1="200" y1="480" x2="200" y2="650" class="line" />
+
+        <!-- User - Chat - Group (1:n:m) -->
+        <line x1="250" y1="240" x2="330" y2="450" class="line" />
+        <line x1="370" y1="510" x2="250" y2="670" class="line" />
+        <polygon points="350,450 400,480 350,510 300,480" class="relationship" />
+        <text x="350" y="485">채팅</text>
+
+        <!-- ★ 핵심 수정: User - 개인관리 - Schedule (1:n) ★ -->
+        <!-- User에서 마름모로 -->
+        <line x1="250" y1="210" x2="950" y2="350" class="line" /> 
+        <!-- 마름모에서 Schedule로 -->
+        <line x1="1050" y1="410" x2="1000" y2="650" class="line" />
+        <polygon points="1000,350 1060,380 1000,410 940,380" class="relationship" />
+        <text x="1000" y="385">개인관리</text>
+
+        <!-- ★ 핵심 수정: Group - 그룹공유 - Schedule (1:n) ★ -->
+        <!-- Group에서 마름모로 -->
+        <line x1="250" y1="690" x2="550" y2="690" class="line" />
+        <!-- 마름모에서 Schedule로 -->
+        <line x1="650" y1="690" x2="950" y2="690" class="line" />
+        <polygon points="600,660 660,690 600,720 540,690" class="relationship" />
+        <text x="600" y="695">그룹공유</text>
+
+        <!-- 2. ENTITIES (Rectangles) -->
+        <rect x="150" y="200" width="100" height="60" rx="5" class="entity" />
+        <text x="200" y="235">users</text>
+
+        <rect x="550" y="200" width="100" height="60" rx="5" class="entity" />
+        <text x="600" y="235">materials</text>
+
+        <rect x="150" y="650" width="100" height="60" rx="5" class="entity" />
+        <text x="200" y="685">groups</text>
+
+        <rect x="950" y="650" width="100" height="60" rx="5" class="entity" />
+        <text x="1000" y="685">schedules</text>
+
+        <!-- 3. RELATIONSHIPS (Diamonds) -->
+        <polygon points="400,170 460,200 400,230 340,200" class="relationship" />
+        <text x="400" y="205">업로드</text>
+
+        <polygon points="200,380 260,430 200,480 140,430" class="relationship" />
+        <text x="200" y="435">가입</text>
+
+        <!-- 4. ATTRIBUTES (Ovals) -->
+        <ellipse cx="100" cy="150" rx="40" ry="20" class="attribute" />
+        <text x="100" y="155" class="key">id</text>
+        <ellipse cx="200" cy="120" rx="45" ry="20" class="attribute" />
+        <text x="200" y="125">login_id</text>
+
+        <ellipse cx="100" cy="750" rx="40" ry="20" class="attribute" />
+        <text x="100" y="755" class="key">id</text>
+        <ellipse cx="220" cy="780" rx="60" ry="20" class="attribute" />
+        <text x="220" y="785" class="key">unique_code</text>
+
+        <!-- 5. CARDINALITY LABELS -->
+        <text x="310" y="190" class="label">1</text>
+        <text x="490" y="190" class="label">n</text>
+        
+        <text x="220" y="370" class="label">n</text>
+        <text x="220" y="620" class="label">m</text>
+
+        <text x="280" y="210" class="label">1</text>
+        <text x="980" y="640" class="label">n</text> <!-- 개인관리 n -->
+
+        <text x="280" y="680" class="label">1</text>
+        <text x="930" y="680" class="label">n</text> <!-- 그룹공유 n -->
+
+    </svg>
+</body>
+</html>
