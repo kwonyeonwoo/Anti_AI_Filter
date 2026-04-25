@@ -2,37 +2,37 @@
 name: workspace-master
 description: A comprehensive skill for managing MyAgentProject workspace, enforcing full-stack standards, automating project sync, and conducting rigorous code reviews. Use this when starting a new task, switching projects, or deploying changes.
 ---
-
 # Workspace Master
 
-Welcome to the command center for MyAgentProject. This skill optimizes your performance across all active sub-projects.
+Welcome to the command center for MyAgentProject. This skill optimizes your performance across all active sub-projects through intelligent automation.
+
+## 🏁 Session Entry Protocol
+Upon session initialization or when the user says "Help":
+1. **Reference Guide:** Read [usage.md](references/usage.md).
+2. **Greet:** Present a concise summary of "Quick Commands" and current "Security Status" to the user.
+3. **Onboard:** If it's a new project, suggest the best-fitting expert skill from the toolkit.
+
+## 🧠 Intelligent Project Routing (Auto-Detection)
+...
+
+Upon session start or task switch, Gemini CLI MUST perform the following:
+1.  **Detect:** Scan for `package.json`, `firebase.json`, or `next.config.js`.
+2.  **Context Load:**
+    - If `Next.js` found: Prioritize `pro-dev-toolkit/references/frontend.md`.
+    - If `Firebase` found: Prioritize `pro-dev-toolkit/references/firebase.md`.
+    - If `.git` found: Activate `workspace-master` sync protocols.
+3.  **Prune:** If a project doesn't use a specific technology, explicitly ignore those reference files to save tokens.
 
 ## 🛠 Project Lifecycle Workflow
-
-1. **Start of Session:**
-   - Read `GEMINI.md` in the root and project directories.
-   - Run `git pull` on the active project to ensure context is fresh.
-2. **Implementation Phase:**
-   - Refer to [standards.md](references/standards.md) for Next.js, Firebase, and security rules.
-   - Use [review.md](references/review.md) to validate plans before execution.
-3. **End of Task:**
-   - Update `GEMINI.md` with detailed progress.
-   - Stage changes and propose a commit message.
-   - Run `git push` upon user confirmation.
-
-## ⌨️ Quick Commands & Automation
-
-- **Auto Sync:** Run `node scripts/sync.cjs` to automate the entire wrap-up process.
-- **System Notification:** Run `node scripts/notify.cjs "메시지"` to send a Windows Toast notification.
-- **Project Summary:** Use LLM capabilities to summarize the current conversation into `GEMINI.md` before syncing.
+...
 
 ## 🔄 Automated Wrap-up Procedure
 When the user says "Wrap up" or "Sync projects":
-1.  **Reflect:** Summarize all code changes and conversation highlights.
-2.  **Document:** Update the root `GEMINI.md` with a "Last Session Highlights" section.
-3.  **Execute:** Run the internal sync script (`sync.cjs`) to push everything to Git.
-4.  **Notify:** Always run `node scripts/notify.cjs "동기화 및 작업 종료가 완료되었습니다!"` as the final step.
-5.  **Confirm:** Report the success and provide a clear entry point for the next session.
+1.  **Reflect & Report:** Summarize code changes AND report skill performance (e.g., "Shell-safety validated 3 commands", "Context-efficiency pruned 500 tokens").
+2.  **Document:** Update the root `GEMINI.md`.
+3.  **Execute:** Run `sync.cjs`.
+4.  **Notify:** Run `notify.cjs`.
+
 
 ## 📚 Reference Materials
 - [Coding Standards](references/standards.md)
