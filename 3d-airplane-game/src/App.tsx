@@ -163,6 +163,7 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
       const updated = prev.map(e => {
         e.reloadTimer = (e.reloadTimer || 0) + delta;
         if (e.pos.z < -20 && e.pos.z > -180) {
+          /* 적군 사격 일시 중지
           if ((e.burstCount || 0) < 3) {
             if (e.reloadTimer > 0.2) {
               setEnemyBullets(pb => [...pb, { id: Math.random(), pos: e.pos.clone(), velocity: new THREE.Vector3(0, 0, 75) }]);
@@ -175,6 +176,7 @@ const Game = ({ onGameOver, score, setScore, hp, setHp, missileGauge, setMissile
               e.reloadTimer = 0;
             }
           }
+          */
         }
         if (e.hitTimer && e.hitTimer > 0) e.hitTimer -= delta;
         return { ...e, pos: e.pos.clone().add(e.velocity.clone().multiplyScalar(delta)) };
