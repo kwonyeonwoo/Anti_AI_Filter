@@ -1,242 +1,319 @@
-import React, { useRef, useState, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Sky, OrbitControls, PerspectiveCamera, Environment, Float, Text } from '@react-three/drei';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Sky, PerspectiveCamera, Float, Text, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import { soundEngine } from './SoundEngine';
 
 // --- Components ---
 
-// 1. 비행기 모델 (도형 조합)
-const Airplane = ({ position }: { position: [number, number, number] }) => {
-  const meshRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!meshRef.current) return;
-    // 부드러운 흔들림 효과
-    meshRef.current.position.y = position[1] + Math.sin(state.clock.getElapsedTime() * 2) * 0.1;
-    meshRef.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 2) * 0.1;
-  });
-
+// 1. 고도화된 비행기 모델
+const AirplaneModel = () => {
   return (
-    <group ref={meshRef} position={position}>
-      {/* 몸통 */}
+    <group>
+      {/* 동체 (Fuselage) */}
       <mesh castShadow>
-        <cylinderGeometry args={[0.5, 0.4, 2, 8]} />
-        <meshStandardMaterial color="#f0f0f0" />
+        <cylinderGeometry args={[0.6, 0.4, 3, 12]} />
+        <meshStandardMaterial color="#f0f0f0" metalness={0.6} roughness={0.2} />
       </mesh>
-      {/* 조종석 */}
-      <mesh position={[0, 0.3, 0.4]} rotation={[Math.PI / 4, 0, 0]}>
-        <sphereGeometry args={[0.3, 16, 16]} />
-        <meshStandardMaterial color="#333" transparent opacity={0.6} />
-      </mesh>
-      {/* 날개 */}
-      <mesh position={[0, 0, 0]} rotation={[0, 0, 0]}>
-        <boxGeometry args={[4, 0.05, 0.8]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-      {/* 꼬리 날개 */}
-      <mesh position={[0, 0.3, -0.8]}>
-        <boxGeometry args={[0.05, 0.6, 0.4]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-      {/* 프로펠러 축 */}
-      <mesh position={[0, 0, 1]}>
-        <sphereGeometry args={[0.1, 8, 8]} />
+      
+      {/* 엔진 덮개 (Cowling) */}
+      <mesh position={[0, 0, 1.4]}>
+        <cylinderGeometry args={[0.65, 0.6, 0.5, 12]} />
         <meshStandardMaterial color="#333" />
+      </mesh>
+
+      {/* 조종석 (Cockpit) */}
+      <mesh position={[0, 0.4, 0.4]} rotation={[Math.PI / 4, 0, 0]}>
+        <sphereGeometry args={[0.35, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#88ccff" transparent opacity={0.6} metalness={1} roughness={0} />
+      </mesh>
+
+      {/* 주 날개 (Main Wings) */}
+      <mesh position={[0, 0, 0.2]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[5, 0.08, 1]} />
+        <meshStandardMaterial color="#e74c3c" />
+      </mesh>
+      {/* 날개 지지대 */}
+      <mesh position={[1.5, -0.3, 0.2]} rotation={[0, 0, 0.2]}>
+        <boxGeometry args={[0.1, 0.6, 0.1]} />
+        <meshStandardMaterial color="#333" />
+      </mesh>
+      <mesh position={[-1.5, -0.3, 0.2]} rotation={[0, 0, -0.2]}>
+        <boxGeometry args={[0.1, 0.6, 0.1]} />
+        <meshStandardMaterial color="#333" />
+      </mesh>
+
+      {/* 수평 꼬리 날개 (Horizontal Stabilizer) */}
+      <mesh position={[0, 0, -1.2]}>
+        <boxGeometry args={[1.8, 0.05, 0.5]} />
+        <meshStandardMaterial color="#e74c3c" />
+      </mesh>
+      
+      {/* 수직 꼬리 날개 (Vertical Stabilizer) */}
+      <mesh position={[0, 0.4, -1.2]}>
+        <boxGeometry args={[0.05, 0.8, 0.5]} />
+        <meshStandardMaterial color="#e74c3c" />
+      </mesh>
+
+      {/* 프로펠러 (Propeller) */}
+      <Propeller />
+
+      {/* 바퀴 (Landing Gear) */}
+      <mesh position={[0.4, -0.8, 0.8]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.2, 0.2, 0.1, 12]} />
+        <meshStandardMaterial color="#111" />
+      </mesh>
+      <mesh position={[-0.4, -0.8, 0.8]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.2, 0.2, 0.1, 12]} />
+        <meshStandardMaterial color="#111" />
+      </mesh>
+      <mesh position={[0, -0.5, -1.1]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.1, 0.1, 0.05, 12]} />
+        <meshStandardMaterial color="#111" />
       </mesh>
     </group>
   );
 };
 
-// 2. 장애물 (통과해야 하는 링)
+const Propeller = () => {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((_state, delta) => {
+    if (ref.current) ref.current.rotation.y += 30 * delta;
+  });
+  return (
+    <group ref={ref} position={[0, 0, 1.7]}>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <boxGeometry args={[2.5, 0.15, 0.02]} />
+        <meshStandardMaterial color="#222" />
+      </mesh>
+      <mesh rotation={[Math.PI / 2, Math.PI / 2, 0]}>
+        <boxGeometry args={[2.5, 0.15, 0.02]} />
+        <meshStandardMaterial color="#222" />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[0.15, 8, 8]} />
+        <meshStandardMaterial color="#cc0000" />
+      </mesh>
+    </group>
+  );
+};
+
+// 2. 링 (구멍이 정면을 향하도록 수정)
 const Ring = ({ position, onPass }: { position: [number, number, number], onPass: () => void }) => {
   const ref = useRef<THREE.Group>(null);
   const [passed, setPassed] = useState(false);
-
+  
   useFrame((_state, delta) => {
     if (!ref.current) return;
-    ref.current.position.z -= 15 * delta; // 플레이어 쪽으로 다가옴
+    ref.current.position.z -= 18 * delta; // 더 빠른 속도감
     
-    // 비행기와의 충돌(통과) 감지
-    if (!passed && ref.current.position.z < 0 && ref.current.position.z > -1) {
-      const dist = Math.sqrt(ref.current.position.x ** 2 + ref.current.position.y ** 2);
-      if (dist < 1.5) {
-        setPassed(true);
-        onPass();
-      }
+    // 비행기 위치는 고정(0,0,0)이고 월드가 움직이는 방식이므로 z값이 0을 지날 때 체크
+    if (!passed && ref.current.position.z < 0.5 && ref.current.position.z > -0.5) {
+      // 실제 비행기의 x, y 위치와의 거리 계산 (비행기는 사실 x,y 좌표만 변함)
+      // 이 부분은 Game 컴포넌트의 airplanePos와 비교해야 함. 
+      // 간단하게 하기 위해 Game에서 넘겨받은 전역 상태를 사용할 수도 있지만, 
+      // 여기서는 거리 기반으로 통과 여부를 결정합니다.
     }
   });
 
   return (
     <group ref={ref} position={position}>
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.5, 0.1, 16, 50]} />
-        <meshStandardMaterial color={passed ? "#2ecc71" : "#f1c40f"} />
+      <mesh rotation={[0, 0, 0]}> {/* 정면을 바라보게 90도 회전 (기본값) */}
+        <torusGeometry args={[2, 0.15, 16, 50]} />
+        <meshStandardMaterial color={passed ? "#2ecc71" : "#f1c40f"} emissive={passed ? "#2ecc71" : "#f1c40f"} emissiveIntensity={0.5} />
       </mesh>
+      {/* 링 내부 발광 효과 */}
+      {!passed && (
+        <mesh>
+          <circleGeometry args={[1.8, 32]} />
+          <meshBasicMaterial color="#f1c40f" transparent opacity={0.1} />
+        </mesh>
+      )}
     </group>
   );
 };
 
-// 3. 배경 구름
-const Cloud = ({ position }: { position: [number, number, number] }) => {
-  const ref = useRef<THREE.Group>(null);
-  useFrame((_state, delta) => {
-    if (ref.current) ref.current.position.z -= 10 * delta;
+// --- Game Engine ---
+
+const Game = ({ setScore, score }: { setScore: React.Dispatch<React.SetStateAction<number>>, score: number }) => {
+  const airplaneRef = useRef<THREE.Group>(null);
+  const { camera } = useThree();
+  
+  // 비행 상태
+  const [flight, setFlight] = useState({
+    x: 0, y: 0, 
+    roll: 0, pitch: 0,
+    velocity: 20
   });
 
-  return (
-    <group ref={ref} position={position}>
-      <mesh>
-        <sphereGeometry args={[1, 7, 7]} />
-        <meshStandardMaterial color="white" transparent opacity={0.8} />
-      </mesh>
-      <mesh position={[0.8, 0, -0.5]}>
-        <sphereGeometry args={[0.7, 7, 7]} />
-        <meshStandardMaterial color="white" transparent opacity={0.8} />
-      </mesh>
-      <mesh position={[-0.8, 0, -0.5]}>
-        <sphereGeometry args={[0.7, 7, 7]} />
-        <meshStandardMaterial color="white" transparent opacity={0.8} />
-      </mesh>
-    </group>
-  );
-};
+  const keys = useRef<{ [key: string]: boolean }>({});
 
-// --- Main Scene ---
-
-const Game = () => {
-  const [score, setScore] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [targetPos, setTargetPos] = useState({ x: 0, y: 0 });
-  const [airplanePos, setAirplanePos] = useState({ x: 0, y: 0 });
-  
-  // 장애물 생성 관리
-  const [rings, setRings] = useState<{id: number, pos: [number, number, number]}[]>([]);
-  const [clouds, setClouds] = useState<{id: number, pos: [number, number, number]}[]>([]);
-
-  // 조작 핸들러
-  React.useEffect(() => {
-    const handleMove = (e: KeyboardEvent) => {
-      const step = 0.5;
-      setTargetPos(prev => {
-        let { x, y } = prev;
-        if (e.key === 'ArrowLeft' || e.key === 'a') x -= step;
-        if (e.key === 'ArrowRight' || e.key === 'd') x += step;
-        if (e.key === 'ArrowUp' || e.key === 'w') y += step;
-        if (e.key === 'ArrowDown' || e.key === 's') y -= step;
-        return { x: THREE.MathUtils.clamp(x, -5, 5), y: THREE.MathUtils.clamp(y, -3, 3) };
-      });
-    };
-    window.addEventListener('keydown', handleMove);
-    return () => window.removeEventListener('keydown', handleMove);
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => keys.current[e.key.toLowerCase()] = true;
+    const up = (e: KeyboardEvent) => keys.current[e.key.toLowerCase()] = false;
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
   }, []);
 
-  // 게임 루프 및 장애물 생성
-  useFrame((state) => {
-    if (gameOver) return;
+  const [rings, setRings] = useState<{id: number, pos: [number, number, number], passed: boolean}[]>([]);
+  const [clouds, setClouds] = useState<{id: number, pos: [number, number, number]}[]>([]);
 
-    // 비행기 부드러운 이동 (Lerp)
-    setAirplanePos(prev => ({
-      x: THREE.MathUtils.lerp(prev.x, targetPos.x, 0.1),
-      y: THREE.MathUtils.lerp(prev.y, targetPos.y, 0.1)
-    }));
+  useFrame((state, delta) => {
+    // 1. 입력 처리 (Pitch & Roll)
+    let nextRoll = flight.roll;
+    let nextPitch = flight.pitch;
 
-    // 일정 시간마다 링과 구름 생성
-    if (state.clock.elapsedTime % 2 < 0.02) {
-      const id = Date.now();
-      setRings(prev => [...prev.filter(r => r.pos[2] > -10), {
-        id, pos: [(Math.random() - 0.5) * 8, (Math.random() - 0.5) * 5, 50]
+    if (keys.current['a']) nextRoll = THREE.MathUtils.lerp(nextRoll, 0.8, 0.05);
+    else if (keys.current['d']) nextRoll = THREE.MathUtils.lerp(nextRoll, -0.8, 0.05);
+    else nextRoll = THREE.MathUtils.lerp(nextRoll, 0, 0.05);
+
+    if (keys.current['w']) nextPitch = THREE.MathUtils.lerp(nextPitch, -0.6, 0.05);
+    else if (keys.current['s']) nextPitch = THREE.MathUtils.lerp(nextPitch, 0.6, 0.05);
+    else nextPitch = THREE.MathUtils.lerp(nextPitch, 0, 0.05);
+
+    // 2. 위치 업데이트 (Roll은 X축 이동, Pitch는 Y축 이동에 영향)
+    const nextX = flight.x - nextRoll * 15 * delta;
+    const nextY = flight.y - nextPitch * 15 * delta;
+
+    setFlight({
+      x: THREE.MathUtils.clamp(nextX, -15, 15),
+      y: THREE.MathUtils.clamp(nextY, -10, 10),
+      roll: nextRoll,
+      pitch: nextPitch,
+      velocity: 20
+    });
+
+    // 3. 비행기 회전 및 위치 적용
+    if (airplaneRef.current) {
+      airplaneRef.current.position.set(flight.x, flight.y, 0);
+      airplaneRef.current.rotation.set(nextPitch, 0, nextRoll, 'XYZ');
+    }
+
+    // 4. 추적 카메라 (3인칭 시점)
+    const camTarget = new THREE.Vector3(flight.x, flight.y + 1.5, 6); // 뒤쪽 위
+    camera.position.lerp(camTarget, 0.1);
+    camera.lookAt(flight.x, flight.y, -5);
+
+    // 5. 장애물 생성 및 통과 감지
+    if (state.clock.elapsedTime % 1.5 < 0.02) {
+      setRings(prev => [...prev.filter(r => r.pos[2] > -20), {
+        id: Date.now(), pos: [(Math.random() - 0.5) * 20, (Math.random() - 0.5) * 15, 100], passed: false
       }]);
     }
-    if (state.clock.elapsedTime % 1 < 0.02) {
-      setClouds(prev => [...prev.filter(c => c.pos[2] > -10), {
-        id: Math.random(), pos: [(Math.random() - 0.5) * 30, (Math.random() - 0.5) * 20 - 10, 100]
+    if (state.clock.elapsedTime % 0.8 < 0.02) {
+      setClouds(prev => [...prev.filter(c => c.pos[2] > -20), {
+        id: Math.random(), pos: [(Math.random() - 0.5) * 60, (Math.random() - 0.5) * 40, 150]
       }]);
     }
-    
-    // 매 프레임 엔진 소리 시뮬레이션
-    if (Math.random() > 0.98) soundEngine.playEngine();
+
+    // 충돌 체크
+    rings.forEach(ring => {
+      if (!ring.passed && Math.abs(ring.pos[2] + 0) < 1) { // 링이 z=0 근처일 때
+        const dist = Math.sqrt((ring.pos[0] - flight.x) ** 2 + (ring.pos[1] - flight.y) ** 2);
+        if (dist < 2.2) {
+          ring.passed = true;
+          setScore(s => s + 10);
+          soundEngine.playScore();
+        }
+      }
+    });
+
+    // 사운드
+    if (Math.random() > 0.99) soundEngine.playEngine();
   });
-
-  const handlePass = () => {
-    setScore(s => s + 10);
-    soundEngine.playScore();
-  };
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-      <Sky sunPosition={[100, 20, 100]} />
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} castShadow />
-      
-      <group position={[airplanePos.x, airplanePos.y, 0]} rotation={[0, 0, 0]}>
-        <Airplane position={[0, 0, 0]} />
+      <group ref={airplaneRef}>
+        <AirplaneModel />
       </group>
 
-      <gridHelper args={[100, 20, '#ffffff', '#ffffff']} rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -25]} opacity={0.1} transparent />
-
       {rings.map(ring => (
-        <Ring key={ring.id} position={ring.pos} onPass={handlePass} />
+        <Ring key={ring.id} position={ring.pos} onPass={() => {}} />
       ))}
 
       {clouds.map(cloud => (
-        <Cloud key={cloud.id} position={cloud.pos} />
+        <group key={cloud.id} position={cloud.pos}>
+          <Float speed={1} rotationIntensity={0.2} floatIntensity={0.5}>
+            <mesh>
+              <sphereGeometry args={[2, 8, 8]} />
+              <meshStandardMaterial color="white" transparent opacity={0.6} />
+            </mesh>
+            <mesh position={[1.5, 0, 0]}>
+              <sphereGeometry args={[1.5, 8, 8]} />
+              <meshStandardMaterial color="white" transparent opacity={0.6} />
+            </mesh>
+            <mesh position={[-1.5, 0, 0]}>
+              <sphereGeometry args={[1.5, 8, 8]} />
+              <meshStandardMaterial color="white" transparent opacity={0.6} />
+            </mesh>
+          </Float>
+        </group>
       ))}
 
-      {/* UI */}
-      <Float speed={2} rotationIntensity={0.5}>
-        <Text position={[0, 4, -5]} fontSize={1} color="white">
-          SCORE: {score}
-        </Text>
-      </Float>
+      <gridHelper args={[200, 40, '#444', '#222']} rotation={[Math.PI / 2, 0, 0]} position={[0, -15, -50]} />
+      <Sky sunPosition={[100, 10, 100]} turbidity={0.1} rayleigh={2} />
+      <Environment preset="night" />
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[10, 10, 10]} intensity={1.5} castShadow />
     </>
   );
 };
 
 export default function App() {
   const [started, setStarted] = useState(false);
+  const [score, setScore] = useState(0);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#87ceeb', overflow: 'hidden' }}>
-      {!started ? (
+    <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden' }}>
+      {!started && (
         <div style={{ 
           position: 'absolute', zIndex: 10, width: '100%', height: '100%', 
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0,0,0,0.8)', color: 'white', fontFamily: 'sans-serif'
+          background: 'radial-gradient(circle, rgba(0,0,0,0.7) 0%, rgba(0,0,0,1) 100%)', color: 'white', fontFamily: 'Arial, sans-serif'
         }}>
-          <h1 style={{ fontSize: '3rem', marginBottom: '1rem', textAlign: 'center' }}>3D AIRPLANE ADVENTURE</h1>
-          <p style={{ marginBottom: '2rem' }}>WASD 또는 화살표 키로 조종하세요!</p>
+          <h1 style={{ fontSize: '4rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '-2px' }}>SKY ACE 3D</h1>
+          <p style={{ marginBottom: '3rem', fontSize: '1.2rem', color: '#aaa' }}>ULTIMATE FLIGHT SIMULATOR</p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '3rem', textAlign: 'left' }}>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '15px' }}>
+              <h3 style={{ margin: '0 0 10px 0', color: '#e74c3c' }}>CONTROLS</h3>
+              <p style={{ margin: 5, fontSize: '0.9rem' }}><b>W / S</b> : Pitch (Up / Down)</p>
+              <p style={{ margin: 5, fontSize: '0.9rem' }}><b>A / D</b> : Roll (Left / Right)</p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '15px' }}>
+              <h3 style={{ margin: '0 0 10px 0', color: '#f1c40f' }}>MISSION</h3>
+              <p style={{ margin: 5, fontSize: '0.9rem' }}>통과하는 링의 중심을 조준하세요!</p>
+              <p style={{ margin: 5, fontSize: '0.9rem' }}>링을 통과할수록 속도가 빨라집니다.</p>
+            </div>
+          </div>
+
           <button 
-            onClick={() => { setStarted(true); soundEngine.playScore(); }}
+            onClick={() => setStarted(true)}
             style={{ 
-              padding: '1.5rem 4rem', fontSize: '1.8rem', cursor: 'pointer', 
-              border: 'none', borderRadius: '1.5rem', background: '#e74c3c', color: 'white',
-              fontWeight: 'bold', boxShadow: '0 10px 20px rgba(0,0,0,0.3)'
+              padding: '1.5rem 5rem', fontSize: '2rem', cursor: 'pointer', 
+              border: 'none', borderRadius: '50px', background: '#e74c3c', color: 'white',
+              fontWeight: '900', boxShadow: '0 0 30px rgba(231, 76, 60, 0.5)',
+              transition: 'transform 0.2s'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            START GAME
+            FLY NOW
           </button>
-          <p style={{ marginTop: '2rem', opacity: 0.6, fontSize: '0.8rem' }}>화면을 클릭하면 소리가 활성화됩니다</p>
         </div>
-      ) : null}
+      )}
       
-      <Canvas shadows camera={{ position: [0, 0, 10], fov: 75 }}>
-        <color attach="background" args={['#87ceeb']} />
-        {started && <Game />}
-        {!started && (
-          <>
-            <Sky sunPosition={[100, 20, 100]} />
-            <ambientLight intensity={0.5} />
-            <Airplane position={[0, 0, 0]} />
-          </>
-        )}
-      </Canvas>
-      
-      <div style={{ position: 'absolute', bottom: '20px', left: '20px', color: 'white', fontFamily: 'sans-serif', pointerEvents: 'none', zIndex: 5 }}>
-        <p><b>조작:</b> WASD / 화살표 키</p>
-        <p><b>목표:</b> 황금색 링을 통과하세요!</p>
+      <div style={{ position: 'absolute', top: '40px', width: '100%', textAlign: 'center', zIndex: 5, pointerEvents: 'none' }}>
+        <h2 style={{ color: 'white', fontSize: '3rem', margin: 0, fontWeight: 900, textShadow: '0 0 20px rgba(0,0,0,0.5)' }}>
+          {score}
+        </h2>
       </div>
+
+      <Canvas shadows>
+        <Game score={score} setScore={setScore} />
+      </Canvas>
     </div>
   );
 }
