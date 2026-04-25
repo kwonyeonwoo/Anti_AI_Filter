@@ -23,15 +23,16 @@ Welcome to the command center for MyAgentProject. This skill optimizes your perf
 ## ⌨️ Quick Commands & Automation
 
 - **Auto Sync:** Run `node scripts/sync.cjs` to automate the entire wrap-up process.
+- **System Notification:** Run `node scripts/notify.cjs "메시지"` to send a Windows Toast notification.
 - **Project Summary:** Use LLM capabilities to summarize the current conversation into `GEMINI.md` before syncing.
-- **Context Restore:** At the start of a session, automatically check for recent commits and update the local state.
 
 ## 🔄 Automated Wrap-up Procedure
 When the user says "Wrap up" or "Sync projects":
 1.  **Reflect:** Summarize all code changes and conversation highlights.
 2.  **Document:** Update the root `GEMINI.md` with a "Last Session Highlights" section.
-3.  **Execute:** Run the internal sync script to push everything to Git.
-4.  **Confirm:** Report the success and provide a clear entry point for the next session.
+3.  **Execute:** Run the internal sync script (`sync.cjs`) to push everything to Git.
+4.  **Notify:** Always run `node scripts/notify.cjs "동기화 및 작업 종료가 완료되었습니다!"` as the final step.
+5.  **Confirm:** Report the success and provide a clear entry point for the next session.
 
 ## 📚 Reference Materials
 - [Coding Standards](references/standards.md)
