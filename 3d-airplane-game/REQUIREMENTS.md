@@ -1,26 +1,36 @@
-# Sky Ace Pro: Flight Simulator Requirements (v2.1)
+# Sky Ace Pro: Flight Simulator Requirements (v3.0 - Realistic Focus)
 
-## 1. Core Physics Engine (Advanced Aerodynamics)
-- **Gravity (G)**: Constant 9.81 m/s² downwards.
-- **Thrust (T)**: 
-  - F-35: 191,000 N (Max Afterburner).
-  - 747: 1,000,000 N (Total 4 engines).
-- **Lift (L)**: Based on AoA and Velocity squared.
-- **Speed Scaling**: Visual movement speed in the 3D world must match the HUD display. High-speed effects (Motion Blur placeholder, FOV shift) should be enhanced.
+## 1. Professional Aerodynamics Engine
+- **Gravity (F_g)**: $F_g = m \cdot g$, where $g = 9.80665$ m/s². 
+- **Atmospheric Model**: $\rho$ (Air Density) should ideally scale with altitude, but for now, fixed at $1.225$ kg/m³ with a basic linear decay placeholder.
+- **Lift Equation**: $L = \frac{1}{2} \rho v^2 S C_L$. 
+  - $C_L$ must be derived from a realistic lift-slope curve: $C_L = 2 \pi \alpha$ (for small $\alpha$).
+  - **Stall Logic**: Critical AoA at 16 degrees. Beyond this, $C_L$ drops sharply.
+- **Drag Equation**: $D = \frac{1}{2} \rho v^2 S C_D$.
+  - $C_D = C_{D,0} + K C_L^2$ (Parasitic + Induced Drag).
+- **Thrust Lapse**: Thrust should decrease slightly as altitude increases and speed increases (ram air effect vs thinning air).
+- **Moments & Stability**: Implement basic Pitch, Roll, and Yaw damping to simulate air resistance against rotation.
 
 ## 2. Structural & Human Limits (G-Force)
-- **G-Force Range**: Restricted to **-9.0G to +10.0G**.
-- **Control Clamping**: Active.
+- **G-Force**: $G = \frac{|\vec{L} + \vec{T}_{vertical}|}{m \cdot g}$.
+- **Range**: -9.0G to +10.0G.
+- **Structural Integrity**: Sustained high-G should trigger airframe stress warnings.
 
-## 3. Aircraft Specifications (War Thunder Reference)
-### F-35 Stealth Jet (Agile)
-- **Mass**: 18,000 kg
-- **Visual Enhancement**: Increase default FOV and camera lag to emphasize speed.
+## 3. Aircraft Specifications (War Thunder Accurate)
+### F-35A Lightning II
+- **Mass**: 13,290 kg (Empty) + 8,278 kg (Fuel/Internal) ≈ 20,000 kg.
+- **Max Thrust**: 125 kN (Dry), 191 kN (Afterburner).
+- **Wing Area**: 42.7 m².
+- **Max Speed**: Mach 1.6 (1,931 km/h).
 
-### 747 Airliner (Heavy)
-- **Mass**: 330,000 kg
+### 747-400
+- **Mass**: 178,756 kg (Empty) + Load ≈ 300,000 kg.
+- **Max Thrust**: 4 x 282 kN ≈ 1,128,000 N.
+- **Wing Area**: 525 m².
+- **Max Speed**: Mach 0.85 (912 km/h).
 
-## 4. Environment & Visual Speed
-- **Movement Scale**: Ensure the 3D unit distance correctly represents meters so that 300 km/h feels like 300 km/h.
-- **Dynamic FOV**: FOV should expand significantly at higher speeds (up to 100+) to provide a sense of Mach speed.
-- **Camera Shake**: Implement subtle vibration at high speeds to enhance the feeling of rushing through the air.
+## 4. Visual & Controls
+- **Inverted Y-axis**: (Standard for flight sims) S for Up, W for Down.
+- **Throttle**: Shift/Ctrl for fine-grained control.
+- **Dynamic FOV & Shake**: Maintain from v2.1.
+- **Terrain**: High-precision green/brown world.
