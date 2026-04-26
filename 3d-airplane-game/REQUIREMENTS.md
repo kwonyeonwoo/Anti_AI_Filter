@@ -1,43 +1,26 @@
-# Sky Ace Pro: Flight Simulator Requirements (v2.0)
+# Sky Ace Pro: Flight Simulator Requirements (v2.1)
 
 ## 1. Core Physics Engine (Advanced Aerodynamics)
 - **Gravity (G)**: Constant 9.81 m/s² downwards.
 - **Thrust (T)**: 
   - F-35: 191,000 N (Max Afterburner).
   - 747: 1,000,000 N (Total 4 engines).
-  - Variable via Throttle (Shift/Ctrl).
-- **Lift (L)**: 
-  - $L = 0.5 \cdot \rho \cdot v^2 \cdot S \cdot C_L$
-  - $C_L$ (Lift Coefficient) is a function of Angle of Attack (AoA).
-  - Stalling occurs if $v < 180$ km/h or AoA > 15 degrees.
-- **Drag (D)**: 
-  - $D = 0.5 \cdot \rho \cdot v^2 \cdot S \cdot C_D$
-  - Includes Parasitic Drag (base) and Induced Drag (due to lift/AoA).
-- **Inertia (F=ma)**: All forces are summed into a Net Force vector, then divided by mass to calculate acceleration.
+- **Lift (L)**: Based on AoA and Velocity squared.
+- **Speed Scaling**: Visual movement speed in the 3D world must match the HUD display. High-speed effects (Motion Blur placeholder, FOV shift) should be enhanced.
 
 ## 2. Structural & Human Limits (G-Force)
 - **G-Force Range**: Restricted to **-9.0G to +10.0G**.
-- **Control Clamping**: If the calculated G-Force exceeds these limits, the control surface deflection (Pitch/Roll input) must be automatically reduced (clamped) to protect the airframe and pilot.
-- **Visual Feedback**: HUD must show current G-Load. Red-out/Black-out simulation placeholder (UI warning).
+- **Control Clamping**: Active.
 
 ## 3. Aircraft Specifications (War Thunder Reference)
 ### F-35 Stealth Jet (Agile)
-- **Mass**: 18,000 kg (Loaded)
-- **Wing Area (S)**: 42 m²
-- **Max Speed**: Mach 1.6+ (~2000 km/h at altitude)
-- **Handling**: High roll rate, high pitch authority.
+- **Mass**: 18,000 kg
+- **Visual Enhancement**: Increase default FOV and camera lag to emphasize speed.
 
 ### 747 Airliner (Heavy)
-- **Mass**: 330,000 kg (Empty/Partial)
-- **Wing Area (S)**: 510 m²
-- **Max Speed**: 988 km/h
-- **Handling**: Very high inertia, slow response, stable.
+- **Mass**: 330,000 kg
 
-## 4. Environment & Control
-- **World**: Realistic green terrain and blue oceans. High-altitude clouds.
-- **Controls (Inverted)**:
-  - **S**: Pull Up (Elevator Up)
-  - **W**: Push Down (Elevator Down)
-  - **A / D**: Roll Left / Right
-  - **Shift / Ctrl**: Throttle Up / Down
-- **Rendering**: Optimized camera distance per aircraft to ensure full visibility. Near plane: 10, Far plane: 100,000.
+## 4. Environment & Visual Speed
+- **Movement Scale**: Ensure the 3D unit distance correctly represents meters so that 300 km/h feels like 300 km/h.
+- **Dynamic FOV**: FOV should expand significantly at higher speeds (up to 100+) to provide a sense of Mach speed.
+- **Camera Shake**: Implement subtle vibration at high speeds to enhance the feeling of rushing through the air.
