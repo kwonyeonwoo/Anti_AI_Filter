@@ -5,16 +5,11 @@ import * as THREE from 'three';
 
 // --- Aircraft Models ---
 
-// 1. Airliner (Passenger Plane)
 const Airliner = ({ scale }: { scale: number }) => {
   const { scene } = useGLTF('/airplane.glb');
-  useEffect(() => {
-    scene.traverse((obj) => { if ((obj as THREE.Mesh).isMesh) { obj.castShadow = true; obj.receiveShadow = true; } });
-  }, [scene]);
   return <primitive object={scene} scale={scale} rotation={[0, 0, 0]} />; 
 };
 
-// 2. High-Detail Stealth Jet (Procedural)
 const StealthJet = ({ scale }: { scale: number }) => {
   const engineFlame = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
@@ -43,8 +38,8 @@ const Terrain = () => {
     return [...Array(120)].map((_, i) => ({
       id: i,
       pos: [(Math.random() - 0.5) * 80000, 0, (Math.random() - 0.5) * 80000] as [number, number, number],
-      h: 1000 + Math.random() * 4000,
-      r: 1500 + Math.random() * 2500,
+      h: 1500 + Math.random() * 5000,
+      r: 2000 + Math.random() * 3000,
       color: Math.random() > 0.5 ? '#3b5e2b' : '#5c4033' 
     }));
   }, []);
@@ -52,17 +47,18 @@ const Terrain = () => {
   return (
     <group>
       {mountains.map((m) => (
-        <mesh key={m.id} position={[m.pos[0], m.h / 2 - 20, m.pos[2]]}>
+        <mesh key={m.id} position={[m.pos[0], m.h / 2 - 100, m.pos[2]]}>
           <coneGeometry args={[m.r, m.h, 6]} />
           <meshStandardMaterial color={m.color} roughness={1} />
         </mesh>
       ))}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -10, 0]} receiveShadow>
+      {/* 바닥 간격 대폭 확보하여 플리커링 차단 */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -100, 0]} receiveShadow>
         <planeGeometry args={[200000, 200000]} />
         <meshStandardMaterial color="#2d5a27" />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -20, 0]}>
-        <planeGeometry args={[300000, 300000]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -300, 0]}>
+        <planeGeometry args={[400000, 400000]} />
         <meshStandardMaterial color="#004d71" metalness={0.6} />
       </mesh>
     </group>
@@ -74,16 +70,16 @@ const FlightEngine = ({ aircraftType, setTelemetry }: any) => {
   const { camera } = useThree();
   const airplaneRef = useRef<THREE.Group>(null);
   
-  const planePos = useRef(new THREE.Vector3(0, 2000, 0));
+  const planePos = useRef(new THREE.Vector3(0, 3000, 0)); // 고도 상향
   const planeQuat = useRef(new THREE.Quaternion());
-  const planeVelocity = useRef(new THREE.Vector3(0, 0, -150)); 
+  const planeVelocity = useRef(new THREE.Vector3(0, 0, -200)); 
   const throttle = useRef(0.6); 
 
-  // --- Optimized Camera Distances (To show full aircraft) ---
+  // --- Massive View Distance Config ---
   const config = useMemo(() => {
     return aircraftType === 'stealth' 
-      ? { mass: 18000, thrust: 280000, wingArea: 65, maxSpeed: 950, scale: 25, camDist: 100, camHeight: 18 } // Jet: dist 100m
-      : { mass: 55000, thrust: 450000, wingArea: 190, maxSpeed: 350, scale: 15, camDist: 220, camHeight: 35 }; // Airliner: dist 220m
+      ? { mass: 18000, thrust: 320000, wingArea: 65, maxSpeed: 1000, scale: 30, camDist: 180, camHeight: 25 } 
+      : { mass: 60000, thrust: 500000, wingArea: 190, maxSpeed: 400, scale: 15, camDist: 400, camHeight: 60 };
   }, [aircraftType]);
 
   const keys = useRef<{ [key: string]: boolean }>({});
@@ -99,7 +95,7 @@ const FlightEngine = ({ aircraftType, setTelemetry }: any) => {
       if(e.key === 'Control') keys.current['ctrl'] = false;
     };
     window.addEventListener('keydown', down); window.addEventListener('keyup', up);
-    camera.position.set(0, 2000 + config.camHeight, config.camDist);
+    camera.position.set(0, 3000 + config.camHeight, config.camDist);
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
   }, [config, camera]);
 
@@ -141,12 +137,12 @@ const FlightEngine = ({ aircraftType, setTelemetry }: any) => {
       airplaneRef.current.quaternion.copy(planeQuat.current);
     }
 
-    // Dynamic Camera Distance with Speed & Config
-    const speedFactor = (speed * 3.6) / 2500;
-    const camOffset = new THREE.Vector3(0, config.camHeight, config.camDist + speedFactor * 50).applyQuaternion(planeQuat.current);
-    camera.position.lerp(planePos.current.clone().add(camOffset), 0.1);
+    // Dynamic Camera Distance 
+    const speedFactor = (speed * 3.6) / 3000;
+    const camOffset = new THREE.Vector3(0, config.camHeight, config.camDist + speedFactor * 150).applyQuaternion(planeQuat.current);
+    camera.position.lerp(planePos.current.clone().add(camOffset), 0.15);
     camera.up.copy(upVec);
-    camera.lookAt(planePos.current.clone().add(forward.clone().multiplyScalar(300)));
+    camera.lookAt(planePos.current.clone().add(forward.clone().multiplyScalar(500)));
 
     if (_state.clock.elapsedTime % 0.1 < 0.02) {
       setTelemetry({ 
@@ -168,9 +164,9 @@ const FlightEngine = ({ aircraftType, setTelemetry }: any) => {
       <Terrain />
       <Sky sunPosition={[100, 20, 100]} rayleigh={3} />
       <Stars radius={500} count={5000} />
-      <ambientLight intensity={1.2} />
-      <directionalLight position={[100, 1000, 100]} intensity={1.5} />
-      <fog attach="fog" args={['#d0e7ff', 500, 45000]} />
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[100, 1000, 100]} intensity={2.0} />
+      <fog attach="fog" args={['#d0e7ff', 2000, 80000]} />
     </>
   );
 };
@@ -188,12 +184,12 @@ export default function App() {
           <h1 style={{ fontSize: '7rem', fontStyle: 'italic', color: '#3498db', margin: 0 }}>SKY ACE PRO</h1>
           <div style={{ display: 'flex', gap: '30px', margin: '40px 0' }}>
             <div onClick={() => setAircraft('stealth')} style={{ padding: '30px', border: `5px solid ${aircraft === 'stealth' ? '#00ffff' : '#333'}`, borderRadius: '20px', cursor: 'pointer', background: 'rgba(0,0,0,0.5)', width: '280px' }}>
-              <h2 style={{ margin: 0, color: aircraft === 'stealth' ? '#00ffff' : 'white' }}>ADVANCED JET</h2>
-              <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>Full Scale Stealth Simulation</p>
+              <h2 style={{ margin: 0, color: aircraft === 'stealth' ? '#00ffff' : 'white' }}>ULTRA JET</h2>
+              <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>Full Scale Stealth Mode</p>
             </div>
             <div onClick={() => setAircraft('passenger')} style={{ padding: '30px', border: `5px solid ${aircraft === 'passenger' ? '#e74c3c' : '#333'}`, borderRadius: '20px', cursor: 'pointer', background: 'rgba(0,0,0,0.5)', width: '280px' }}>
               <h2 style={{ margin: 0, color: aircraft === 'passenger' ? '#e74c3c' : 'white' }}>AIRLINER</h2>
-              <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>Mega Scale Flight Experience</p>
+              <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>Mega Scale Transport</p>
             </div>
           </div>
           <button onClick={() => setStarted(true)} style={{ padding: '1.5rem 8rem', fontSize: '2.5rem', background: '#3498db', color: 'white', border: 'none', borderRadius: '60px', cursor: 'pointer', fontWeight: 900 }}>ENGAGE</button>
@@ -201,11 +197,7 @@ export default function App() {
       ) : (
         <>
           <div style={{ position: 'absolute', top: '40px', left: '40px', zIndex: 5, background: 'rgba(0,10,20,0.8)', padding: '30px', borderRadius: '20px', border: '2px solid #3498db', minWidth: '300px' }}>
-            <div style={{ fontSize: '1rem', color: '#3498db', marginBottom: '10px' }}>TELEMETRY</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span style={{ color: '#aaa' }}>THRUST</span>
-              <span style={{ fontSize: '1.8rem', fontWeight: 900, color: '#2ecc71' }}>{telemetry.thr}%</span>
-            </div>
+            <div style={{ fontSize: '1rem', color: '#3498db', letterSpacing: '2px', marginBottom: '15px' }}>TELEMETRY</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
               <span style={{ color: '#aaa' }}>SPEED</span>
               <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>{telemetry.speed} <span style={{ fontSize: '1rem' }}>KM/H</span></span>
@@ -214,11 +206,11 @@ export default function App() {
               <span style={{ color: '#aaa' }}>ALTITUDE</span>
               <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>{telemetry.alt} <span style={{ fontSize: '1rem' }}>M</span></span>
             </div>
-            <div style={{ marginTop: '20px', textAlign: 'center', borderTop: '1px solid #333', paddingTop: '15px' }}>
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
               <span style={{ fontSize: '1.8rem', color: telemetry.g > 8 ? '#ff0000' : '#f1c40f' }}>{telemetry.g} G</span>
             </div>
           </div>
-          <Canvas shadows camera={{ fov: 60, near: 50, far: 100000 }}>
+          <Canvas shadows camera={{ fov: 75, near: 5, far: 150000 }}>
             <Suspense fallback={null}>
               <FlightEngine aircraftType={aircraft} setTelemetry={setTelemetry} />
             </Suspense>
