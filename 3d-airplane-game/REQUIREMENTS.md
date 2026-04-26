@@ -1,23 +1,36 @@
-# Sky Ace Pro: Flight Simulator Requirements (v4.0 - True Flight Dynamics)
+# Sky Ace Pro: Flight Simulator Requirements (v5.0 - Multi-Aircraft Expansion)
 
-## 1. Advanced Aerodynamics & Moments
-- **Moment-based Rotation**: Inputs (A/D, W/S) no longer directly set rotation. Instead, they apply **Torque** to the airframe.
-- **Rotational Damping**: The air provides resistance against rotation, which scales with speed. This prevents the "instant stop" feel of UFOs and adds "weight" to the controls.
-- **Directional Stability (Weather-vaning)**: The aircraft naturally attempts to align its nose with the velocity vector (relative wind) through aerodynamic pressure on the vertical and horizontal stabilizers.
-- **Sideslip & Skidding**: Turning without banking will result in a "skid," where the plane's nose is not aligned with its travel path, increasing drag and reducing efficiency.
+## 1. Professional Aerodynamics Engine
+- **Physics**: Constant Newtonian physics (F=ma).
+- **Moments**: Angular velocity and torque-based rotation.
+- **Damping**: Dynamic aerodynamic damping based on speed.
 
-## 2. Realistic Physics Constants
-- **Gravity**: 9.80665 m/s².
-- **Inertia Tensor**: 
-  - Roll: Lowest inertia (quickest to rotate).
-  - Pitch: Medium inertia.
-  - Yaw: High inertia.
-- **Compression**: Control surface effectiveness decreases as speed approaches Mach 1.0.
-
-## 3. Structural Limits (G-Force)
+## 2. Structural & Human Limits (G-Force)
 - **Range**: -9.0G to +10.0G.
-- **G-Induced Loss of Control**: High-G turns bleed speed rapidly due to induced drag.
+- **Control Clamping**: Enforced to prevent airframe failure.
+
+## 3. Aircraft Fleet (Realistic Models)
+### F-35 Lightning II (Stealth Jet)
+- **Source**: Hugging Face / cutechicken
+- **Mass**: 18,000 kg | Thrust: 191 kN
+- **Inertia**: Low | Handling: Extreme agility.
+
+### F-16 Fighting Falcon (Agile Jet)
+- **Source**: GitHub / ThreeFlightSimulator
+- **Mass**: 12,000 kg | Thrust: 127 kN
+- **Inertia**: Very Low | Handling: Superior roll rate.
+
+### Supermarine Spitfire (WW2 Propeller)
+- **Source**: BabylonJS Assets
+- **Mass**: 3,000 kg | Thrust: 25,000 N (Propeller equivalent)
+- **Inertia**: Minimal | Handling: High maneuverability at low speeds.
+
+### Airbus A380 (Super-Heavy Airliner)
+- **Source**: Khronos Sample Assets
+- **Mass**: 560,000 kg | Thrust: 1,200,000 N
+- **Inertia**: Extreme | Handling: Very slow response, massive stability.
 
 ## 4. Visual & UI
-- **HUD**: Show speed, altitude, thrust, G-load, and AoA.
-- **Camera**: Dynamic chase cam with "spring" damping to follow the aircraft's mass center rather than its exact pixel position.
+- **Selection UI**: Visual aircraft cards with specs.
+- **Camera**: Dynamic chase cam with aircraft-specific distance and height.
+- **Terrain**: Optimized Natural World v3.0.
