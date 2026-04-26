@@ -12,17 +12,17 @@ const AIRCRAFT_CONFIG = {
   f35: {
     name: "F-35 LIGHTNING",
     file: "/f35.glb",
-    mass: 20000, thrust: 250000, wingArea: 43, cd0: 0.012, liftSlope: 5.5, scale: 0.15, camDist: 100, camHeight: 15, color: "#3498db"
+    mass: 20000, thrust: 250000, wingArea: 43, cd0: 0.012, liftSlope: 5.5, scale: 0.6, camDist: 180, camHeight: 25, color: "#3498db"
   },
   f16: {
     name: "F-16 FALCON",
     file: "/f16.glb",
-    mass: 12000, thrust: 180000, wingArea: 28, cd0: 0.015, liftSlope: 5.0, scale: 0.12, camDist: 90, camHeight: 12, color: "#2ecc71"
+    mass: 12000, thrust: 180000, wingArea: 28, cd0: 0.015, liftSlope: 5.0, scale: 0.5, camDist: 150, camHeight: 20, color: "#2ecc71"
   },
   stunt: {
     name: "EXTRA 300 (STUNT)",
     file: "/stunt.glb",
-    mass: 1100, thrust: 25000, wingArea: 10, cd0: 0.025, liftSlope: 4.5, scale: 15, camDist: 60, camHeight: 10, color: "#f1c40f"
+    mass: 1100, thrust: 25000, wingArea: 10, cd0: 0.025, liftSlope: 4.5, scale: 40.0, camDist: 100, camHeight: 15, color: "#f1c40f"
   },
   airliner: {
     name: "BOEING 747",
