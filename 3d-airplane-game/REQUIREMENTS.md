@@ -1,36 +1,23 @@
-# Sky Ace Pro: Flight Simulator Requirements (v3.0 - Realistic Focus)
+# Sky Ace Pro: Flight Simulator Requirements (v4.0 - True Flight Dynamics)
 
-## 1. Professional Aerodynamics Engine
-- **Gravity (F_g)**: $F_g = m \cdot g$, where $g = 9.80665$ m/s². 
-- **Atmospheric Model**: $\rho$ (Air Density) should ideally scale with altitude, but for now, fixed at $1.225$ kg/m³ with a basic linear decay placeholder.
-- **Lift Equation**: $L = \frac{1}{2} \rho v^2 S C_L$. 
-  - $C_L$ must be derived from a realistic lift-slope curve: $C_L = 2 \pi \alpha$ (for small $\alpha$).
-  - **Stall Logic**: Critical AoA at 16 degrees. Beyond this, $C_L$ drops sharply.
-- **Drag Equation**: $D = \frac{1}{2} \rho v^2 S C_D$.
-  - $C_D = C_{D,0} + K C_L^2$ (Parasitic + Induced Drag).
-- **Thrust Lapse**: Thrust should decrease slightly as altitude increases and speed increases (ram air effect vs thinning air).
-- **Moments & Stability**: Implement basic Pitch, Roll, and Yaw damping to simulate air resistance against rotation.
+## 1. Advanced Aerodynamics & Moments
+- **Moment-based Rotation**: Inputs (A/D, W/S) no longer directly set rotation. Instead, they apply **Torque** to the airframe.
+- **Rotational Damping**: The air provides resistance against rotation, which scales with speed. This prevents the "instant stop" feel of UFOs and adds "weight" to the controls.
+- **Directional Stability (Weather-vaning)**: The aircraft naturally attempts to align its nose with the velocity vector (relative wind) through aerodynamic pressure on the vertical and horizontal stabilizers.
+- **Sideslip & Skidding**: Turning without banking will result in a "skid," where the plane's nose is not aligned with its travel path, increasing drag and reducing efficiency.
 
-## 2. Structural & Human Limits (G-Force)
-- **G-Force**: $G = \frac{|\vec{L} + \vec{T}_{vertical}|}{m \cdot g}$.
+## 2. Realistic Physics Constants
+- **Gravity**: 9.80665 m/s².
+- **Inertia Tensor**: 
+  - Roll: Lowest inertia (quickest to rotate).
+  - Pitch: Medium inertia.
+  - Yaw: High inertia.
+- **Compression**: Control surface effectiveness decreases as speed approaches Mach 1.0.
+
+## 3. Structural Limits (G-Force)
 - **Range**: -9.0G to +10.0G.
-- **Structural Integrity**: Sustained high-G should trigger airframe stress warnings.
+- **G-Induced Loss of Control**: High-G turns bleed speed rapidly due to induced drag.
 
-## 3. Aircraft Specifications (War Thunder Accurate)
-### F-35A Lightning II
-- **Mass**: 13,290 kg (Empty) + 8,278 kg (Fuel/Internal) ≈ 20,000 kg.
-- **Max Thrust**: 125 kN (Dry), 191 kN (Afterburner).
-- **Wing Area**: 42.7 m².
-- **Max Speed**: Mach 1.6 (1,931 km/h).
-
-### 747-400
-- **Mass**: 178,756 kg (Empty) + Load ≈ 300,000 kg.
-- **Max Thrust**: 4 x 282 kN ≈ 1,128,000 N.
-- **Wing Area**: 525 m².
-- **Max Speed**: Mach 0.85 (912 km/h).
-
-## 4. Visual & Controls
-- **Inverted Y-axis**: (Standard for flight sims) S for Up, W for Down.
-- **Throttle**: Shift/Ctrl for fine-grained control.
-- **Dynamic FOV & Shake**: Maintain from v2.1.
-- **Terrain**: High-precision green/brown world.
+## 4. Visual & UI
+- **HUD**: Show speed, altitude, thrust, G-load, and AoA.
+- **Camera**: Dynamic chase cam with "spring" damping to follow the aircraft's mass center rather than its exact pixel position.
