@@ -106,13 +106,21 @@ const FlightEngine = ({ aircraftType, setTelemetry }: any) => {
     const dynamicPressure = 0.5 * SEA_LEVEL_DENSITY * currentSpeed * currentSpeed;
 
     // --- Physically Tuned Rotational Inertia ---
-    // 무거운 기체일수록 회전 가속이 느려지도록 설정 (질량에 비례한 저항)
     const inertiaFactor = Math.max(1.0, specs.mass / 20000); 
-    const damping = 3.5 * (currentSpeed / 200); // 속도 비례 댐핑
+    const damping = 3.5 * (currentSpeed / 200); 
     
-    // Pitch/Roll 가속도 계산 (F = ma의 회전 버전)
-    angularVel.current.x += (pitchTarget * 5.0 - angularVel.current.x * damping) * delta / inertiaFactor;
-    angularVel.current.z += (rollTarget * 7.5 - angularVel.current.z * damping) * delta / inertiaFactor;
+    // Pitch/Roll 가속 및 최대 회전 속도 제한 (Clamping)
+    const maxPitchRate = 1.8; // 초당 최대 Pitch 회전량 (라디안)
+    const maxRollRate = 2.5;  // 초당 최대 Roll 회전량 (라디안)
+
+    angularVel.current.x = THREE.MathUtils.clamp(
+      angularVel.current.x + (pitchTarget * 5.0 - angularVel.current.x * damping) * delta / inertiaFactor,
+      -maxPitchRate, maxPitchRate
+    );
+    angularVel.current.z = THREE.MathUtils.clamp(
+      angularVel.current.z + (rollTarget * 7.5 - angularVel.current.z * damping) * delta / inertiaFactor,
+      -maxRollRate, maxRollRate
+    );
 
     const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(angularVel.current.x * delta, 0, angularVel.current.z * delta));
     quat.current.multiply(qDelta).normalize();
