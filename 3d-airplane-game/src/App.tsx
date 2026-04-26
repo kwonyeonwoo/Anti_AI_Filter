@@ -79,7 +79,7 @@ const FlightEngine = ({ aircraftType, setTelemetry }: any) => {
   const config = useMemo(() => {
     return aircraftType === 'stealth' 
       ? { mass: 18000, thrust: 320000, wingArea: 65, maxSpeed: 1000, scale: 30, camDist: 180, camHeight: 25 } 
-      : { mass: 60000, thrust: 500000, wingArea: 190, maxSpeed: 400, scale: 15, camDist: 400, camHeight: 60 };
+      : { mass: 60000, thrust: 500000, wingArea: 190, maxSpeed: 400, scale: 15, camDist: 1200, camHeight: 150 };
   }, [aircraftType]);
 
   const keys = useRef<{ [key: string]: boolean }>({});
