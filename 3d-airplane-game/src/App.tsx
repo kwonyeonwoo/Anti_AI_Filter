@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Sky, Environment, useGLTF, Stars, Cloud, PerspectiveCamera, Float, Html, Center } from '@react-three/drei';
+import { Sky, Environment, useGLTF, Stars, PerspectiveCamera, Float, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 // --- Loading Screen ---
@@ -23,51 +23,27 @@ const LoadingScreen = () => (
 
 // --- High-Detail Procedural Stealth Fighter (F-35 Style) ---
 const F35StealthModel = ({ scale }: { scale: number }) => {
-  const engineRef = useRef<THREE.Group>(null);
+  const engineFlame = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
-    if (engineRef.current) {
+    if (engineFlame.current) {
       const s = 1 + Math.sin(clock.elapsedTime * 40) * 0.2;
-      engineRef.current.scale.set(s, s, 1);
+      engineFlame.current.scale.set(s, s, 1);
     }
   });
 
   return (
     <group scale={scale * 22} rotation={[0, Math.PI, 0]}>
-      {/* Upper Body / Stealth Shape */}
-      <mesh castShadow>
-        <cylinderGeometry args={[0.5, 0.2, 5.5, 6]} />
-        <meshStandardMaterial color="#0a0a0a" metalness={1} roughness={0.2} />
-      </mesh>
-      {/* Cockpit Canopy */}
-      <mesh position={[0, 0.45, -0.8]} rotation={[-Math.PI / 12, 0, 0]}>
-        <capsuleGeometry args={[0.22, 0.7, 4, 12]} />
-        <meshStandardMaterial color="#222" transparent opacity={0.6} metalness={1} roughness={0} />
-      </mesh>
-      {/* Main Wings (Large Delta) */}
-      <mesh castShadow position={[0, -0.05, 0.8]}>
-        <boxGeometry args={[6.5, 0.1, 2.2]} />
-        <meshStandardMaterial color="#0a0a0a" />
-      </mesh>
-      {/* Air Intakes */}
+      <mesh castShadow><cylinderGeometry args={[0.5, 0.2, 5.5, 6]} /><meshStandardMaterial color="#0a0a0a" metalness={1} roughness={0.2} /></mesh>
+      <mesh position={[0, 0.45, -0.8]} rotation={[-Math.PI / 12, 0, 0]}><capsuleGeometry args={[0.22, 0.7, 4, 12]} /><meshStandardMaterial color="#222" transparent opacity={0.6} metalness={1} roughness={0} /></mesh>
+      <mesh castShadow position={[0, -0.05, 0.8]}><boxGeometry args={[6.5, 0.1, 2.2]} /><meshStandardMaterial color="#0a0a0a" /></mesh>
       <group position={[0, 0, -1.2]}>
         <mesh position={[0.45, 0, 0]}><boxGeometry args={[0.35, 0.45, 1.2]} /><meshStandardMaterial color="#050505" /></mesh>
         <mesh position={[-0.45, 0, 0]}><boxGeometry args={[0.35, 0.45, 1.2]} /><meshStandardMaterial color="#050505" /></mesh>
       </group>
-      {/* V-Tails (쌍발 꼬리날개) */}
-      <mesh castShadow position={[0.8, 0.7, 2.3]} rotation={[0, 0, -Math.PI / 5]}>
-        <boxGeometry args={[0.05, 1.8, 1.2]} />
-        <meshStandardMaterial color="#0a0a0a" />
-      </mesh>
-      <mesh castShadow position={[-0.8, 0.7, 2.3]} rotation={[0, 0, Math.PI / 5]}>
-        <boxGeometry args={[0.05, 1.8, 1.2]} />
-        <meshStandardMaterial color="#0a0a0a" />
-      </mesh>
-      {/* Main Engine & Exhaust */}
-      <group ref={engineRef} position={[0, -0.05, 2.8]}>
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.35, 0.1, 1.8, 12]} />
-          <meshBasicMaterial color="#00ffff" transparent opacity={0.8} />
-        </mesh>
+      <mesh castShadow position={[0.8, 0.7, 2.3]} rotation={[0, 0, -Math.PI / 5]}><boxGeometry args={[0.05, 1.8, 1.2]} /><meshStandardMaterial color="#0a0a0a" /></mesh>
+      <mesh castShadow position={[-0.8, 0.7, 2.3]} rotation={[0, 0, Math.PI / 5]}><boxGeometry args={[0.05, 1.8, 1.2]} /><meshStandardMaterial color="#0a0a0a" /></mesh>
+      <group ref={engineFlame} position={[0, -0.05, 2.8]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.35, 0.1, 1.8, 12]} /><meshBasicMaterial color="#00ffff" transparent opacity={0.8} /></mesh>
       </group>
     </group>
   );
@@ -75,34 +51,34 @@ const F35StealthModel = ({ scale }: { scale: number }) => {
 
 const PassengerPlane = ({ scale }: { scale: number }) => {
   const { scene } = useGLTF('/airplane.glb');
-  // Airliner orientation fix: Make it face -Z
   return <primitive object={scene} scale={scale * 8} rotation={[0, 0, 0]} />; 
 };
 
-// --- World Environment ---
+// --- Natural World Environment ---
 const World = () => {
   const mountains = useMemo(() => {
-    return [...Array(150)].map((_, i) => ({
+    return [...Array(250)].map((_, i) => ({
       id: i,
-      pos: [(Math.random() - 0.5) * 60000, 0, (Math.random() - 0.5) * 60000] as [number, number, number],
-      h: 500 + Math.random() * 3000,
-      r: 1000 + Math.random() * 2000,
-      color: Math.random() > 0.5 ? '#2d3436' : '#1e272e'
+      pos: [(Math.random() - 0.5) * 80000, 0, (Math.random() - 0.5) * 80000] as [number, number, number],
+      h: 500 + Math.random() * 3500,
+      r: 1000 + Math.random() * 3000,
+      // 산맥 색상을 숲(진녹색)과 흙/바위(갈색)로 섞어 자연스럽게 연출
+      color: Math.random() > 0.5 ? '#3b5e2b' : '#5c4033' 
     }));
   }, []);
 
   return (
     <group>
       {mountains.map((m) => (
-        <mesh key={m.id} position={[m.pos[0], m.h / 2 - 100, m.pos[2]]} receiveShadow>
-          <coneGeometry args={[m.r, m.h, 4]} />
-          <meshStandardMaterial color={m.color} roughness={1} />
+        <mesh key={m.id} position={[m.pos[0], m.h / 2 - 50, m.pos[2]]} receiveShadow>
+          <coneGeometry args={[m.r, m.h, 5]} />
+          <meshStandardMaterial color={m.color} roughness={0.9} />
         </mesh>
       ))}
-      {/* Deep Ocean */}
+      {/* Massive Green Ground (초록색 평원) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -5, 0]} receiveShadow>
         <planeGeometry args={[200000, 200000]} />
-        <meshStandardMaterial color="#002d44" metalness={0.9} roughness={0.1} />
+        <meshStandardMaterial color="#2d5a27" roughness={0.8} />
       </mesh>
     </group>
   );
@@ -113,13 +89,12 @@ const FlightSimulator = ({ aircraftType, setTelemetry }: any) => {
   const { camera } = useThree();
   const airplaneRef = useRef<THREE.Group>(null);
   
-  // Real Physics
   const planePos = useRef(new THREE.Vector3(0, 1500, 0));
   const planeQuat = useRef(new THREE.Quaternion());
-  const planeVelocity = useRef(new THREE.Vector3(0, 0, -120)); 
-  const throttle = useRef(0.6); // 스로틀
+  const planeVelocity = useRef(new THREE.Vector3(0, 0, -150)); 
+  const throttle = useRef(0.6); 
   
-  const specs = aircraftType === 'stealth' ? { mass: 18000, thrust: 250000, wingArea: 65 } : { mass: 50000, thrust: 380000, wingArea: 180 };
+  const specs = aircraftType === 'stealth' ? { mass: 18000, thrust: 250000, wingArea: 65, maxSpeed: 850 } : { mass: 50000, thrust: 380000, wingArea: 180, maxSpeed: 300 };
   const keys = useRef<{ [key: string]: boolean }>({});
 
   useEffect(() => {
@@ -139,15 +114,12 @@ const FlightSimulator = ({ aircraftType, setTelemetry }: any) => {
   }, [camera]);
 
   useFrame((_state, delta) => {
-    // 1. Throttle logic (FIXED)
     if (keys.current['shift']) throttle.current = Math.min(1.0, throttle.current + 0.5 * delta);
     if (keys.current['ctrl']) throttle.current = Math.max(0.0, throttle.current - 0.5 * delta);
 
-    // 2. Control logic
     const pitchInput = keys.current['s'] ? 1.5 : (keys.current['w'] ? -1.5 : 0);
     const rollInput = keys.current['a'] ? 2.5 : (keys.current['d'] ? -2.5 : 0);
 
-    // G-force limiter
     const speed = planeVelocity.current.length();
     const upVec = new THREE.Vector3(0, 1, 0).applyQuaternion(planeQuat.current).normalize();
     const aoa = -planeVelocity.current.clone().normalize().dot(upVec);
@@ -160,7 +132,6 @@ const FlightSimulator = ({ aircraftType, setTelemetry }: any) => {
     const rollQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), rollInput * delta);
     planeQuat.current.multiply(pitchQuat).multiply(rollQuat).normalize();
 
-    // 3. Movement
     const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(planeQuat.current).normalize();
     const thrust = forward.clone().multiplyScalar(throttle.current * specs.thrust);
     const gravity = new THREE.Vector3(0, -specs.mass * 9.81, 0);
@@ -171,17 +142,21 @@ const FlightSimulator = ({ aircraftType, setTelemetry }: any) => {
     const acceleration = netForce.divideScalar(specs.mass);
 
     planeVelocity.current.add(acceleration.multiplyScalar(delta));
+
+    // --- MAX SPEED LIMITER ---
+    if (planeVelocity.current.length() > specs.maxSpeed) {
+      planeVelocity.current.normalize().multiplyScalar(specs.maxSpeed);
+    }
+
     planePos.current.add(planeVelocity.current.clone().multiplyScalar(delta));
 
     if (planePos.current.y < 10) { planePos.current.y = 10; planeVelocity.current.y = 0; }
 
-    // 4. Update Aircraft Mesh
     if (airplaneRef.current) {
       airplaneRef.current.position.copy(planePos.current);
       airplaneRef.current.quaternion.copy(planeQuat.current);
     }
 
-    // 5. Camera follow
     const camOffset = new THREE.Vector3(0, 12, 60).applyQuaternion(planeQuat.current);
     camera.position.lerp(planePos.current.clone().add(camOffset), 0.1);
     camera.up.copy(upVec);
@@ -200,14 +175,16 @@ const FlightSimulator = ({ aircraftType, setTelemetry }: any) => {
   return (
     <>
       <group ref={airplaneRef}>
-        {aircraftType === 'passenger' ? <PassengerPlane scale={0.15} /> : <F35StealthModel scale={0.25} />}
+        <Suspense fallback={null}>
+          {aircraftType === 'passenger' ? <PassengerPlane scale={0.15} /> : <F35StealthModel scale={0.25} />}
+        </Suspense>
       </group>
       <World />
       <Sky distance={450000} sunPosition={[100, 10, 100]} rayleigh={3} />
       <Stars radius={500} count={5000} factor={6} />
       <ambientLight intensity={1.0} />
       <directionalLight position={[100, 1000, 100]} intensity={2.0} />
-      <fogExp2 attach="fog" color="#87ceeb" density={0.00003} />
+      <fog attach="fog" args={['#87ceeb', 1000, 50000]} />
     </>
   );
 };
@@ -219,7 +196,7 @@ export default function App() {
   const [telemetry, setTelemetry] = useState({ speed: 0, alt: 0, thr: 0, g: 1.0 });
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', color: 'white', fontFamily: 'Impact, sans-serif' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#d0e7ff', overflow: 'hidden', color: 'white', fontFamily: 'Impact, sans-serif' }}>
       {!started ? (
         <div style={{ 
           position: 'absolute', zIndex: 10, width: '100%', height: '100%', 
@@ -232,11 +209,11 @@ export default function App() {
           <div style={{ display: 'flex', gap: '30px', marginBottom: '50px' }}>
             <div onClick={() => setAircraft('stealth')} style={{ padding: '30px', border: `5px solid ${aircraft === 'stealth' ? '#00ffff' : '#333'}`, borderRadius: '20px', cursor: 'pointer', background: 'rgba(0,0,0,0.5)', width: '280px', transition: 'all 0.2s' }}>
               <h2 style={{ margin: 0, color: aircraft === 'stealth' ? '#00ffff' : 'white' }}>F-35 STEALTH</h2>
-              <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>Advanced Aerodynamics</p>
+              <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>Max Speed: 3000 KM/H</p>
             </div>
             <div onClick={() => setAircraft('passenger')} style={{ padding: '30px', border: `5px solid ${aircraft === 'passenger' ? '#e74c3c' : '#333'}`, borderRadius: '20px', cursor: 'pointer', background: 'rgba(0,0,0,0.5)', width: '280px', transition: 'all 0.2s' }}>
               <h2 style={{ margin: 0, color: aircraft === 'passenger' ? '#e74c3c' : 'white' }}>747 AIRLINER</h2>
-              <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>Heavy Weight System</p>
+              <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>Max Speed: 1080 KM/H</p>
             </div>
           </div>
 
@@ -272,7 +249,7 @@ export default function App() {
             SHIFT: THROTTLE UP | CTRL: THROTTLE DOWN | S: PULL UP | W: PUSH DOWN | A/D: ROLL
           </div>
 
-          <Canvas shadows camera={{ fov: 60, far: 200000 }}>
+          <Canvas shadows camera={{ fov: 60, near: 50, far: 100000 }}> {/* near 값을 50으로 변경하여 깜빡임 방지 */}
             <color attach="background" args={['#87ceeb']} />
             <Suspense fallback={<LoadingScreen />}>
               <FlightSimulator aircraftType={aircraft} setTelemetry={setTelemetry} />
