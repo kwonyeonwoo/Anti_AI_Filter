@@ -38,9 +38,8 @@ const AircraftModel = ({ type, scale }: { type: keyof typeof AIRCRAFT_CONFIG, sc
   // 기체별 방향 보정: 모든 모델이 정면(-Z)을 바라보도록 설정
   const rotation: [number, number, number] = type === 'stunt' ? [0, -Math.PI / 2, 0] : [0, 0, 0];
   if (type === 'f35' || type === 'f16') {
-    // 전투기 모델이 옆을 보고 있는 경우 90도 회전 (예시: -Math.PI/2)
-    // 실제 모델의 방향에 따라 [0, Math.PI/2, 0] 또는 [0, -Math.PI/2, 0] 적용 필요
-    return <primitive object={scene} scale={scale} rotation={[0, -Math.PI / 2, 0]} />; 
+    // 반대로 되어 있는 기체를 180도 회전시켜 정면(-Z)을 보게 함 (기존 -PI/2 -> PI/2)
+    return <primitive object={scene} scale={scale} rotation={[0, Math.PI / 2, 0]} />; 
   }
 
   return <primitive object={scene} scale={scale} rotation={rotation} />; 
