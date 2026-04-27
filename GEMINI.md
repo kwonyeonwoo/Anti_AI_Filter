@@ -1,4 +1,4 @@
-# Project Context & Progress (Last Sync: 2026-04-25)
+# Project Context & Progress (Last Sync: 2026-04-27)
 
 이 파일은 기기 간 세션 이동 및 맥락 유지를 위해 Gemini CLI가 자동으로 관리합니다.
 
@@ -7,19 +7,15 @@
 - **`help`**: Gemini CLI의 기본 도움말과 사용 가능한 스킬 목록을 확인합니다.
 - **`git pull`**: 다른 기기에서 작업 후 최신 상태를 불러올 때 사용합니다.
 
-## 🌟 Last Session Highlights (2026-04-25)
-- **3D Airplane Game (New Project):**
-    - [신규] Three.js 기반 3D 공중전 게임 'SKY ACE' 개발 완료.
-    - [기능] 유도 미사일(Homing Missile), 자동 사격, 적군 점사 패턴 구현.
-    - [시스템] 120초 무피격 시 체력 자동 회복 시스템 적용.
-    - [그래픽] 저작권 프리 절차적 모델링 및 실시간 사운드 합성 엔진 탑재.
-- **Scheduler v2 (v2.5):**
-    - [신규] 한국 법정공휴일 자동 휴무 처리 및 빨간색 표시 기능 추가.
-- **Gemini CLI 스마트 동기화:**
-    - [개선] `sync.ps1` v2.0: 수정 사항이 있는 프로젝트만 선택적으로 커밋/푸시하도록 고도화.
-    - [기능] 대화 목록(GEMINI.md)은 항상 최신 상태로 추적하여 자동 동기화 보장.
-- **Security & Cleanup:**
-    - 저장소 정화: GitHub에 노출된 민감 스크립트 및 대량의 빌드 캐시 삭제 완료.
+## 🌟 Last Session Highlights (2026-04-27)
+- **Scheduler v2 (v2.5.2):**
+    - [기능] 월 80시간 한도 자동 조정 시스템 도입 (안내창 없는 실시간 반영).
+    - [기능] 일별 근로시간 0~8시간 강제 제한 및 시각적 피드백(Adjusted/Limit) 추가.
+    - [안정화] Firestore `hasPendingWrites` 적용으로 입력 중 UI 튕김 현상 원천 해결.
+    - [UI] 헤더 표시 정보를 사용자 아이디에서 전체 이메일 주소로 변경.
+- **Agent Intelligence:**
+    - `generalist` 및 `codebase_investigator` 에이전트를 통한 로직 교차 검증 및 시스템 취약점 진단 완료.
+    - `pro-dev-toolkit` 기반의 고성능 Firebase 동기화 패턴 적용.
 
 ## 📂 Active Projects
 1. Scheduler v2 (Next.js + Firebase) - [완료/고도화]
