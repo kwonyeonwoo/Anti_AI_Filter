@@ -1,36 +1,30 @@
-# Sky Ace Pro: Flight Simulator Requirements (v5.0 - Multi-Aircraft Expansion)
+# Sky Ace Pro: Flight Simulator Requirements (v6.0 - Expanded Local Fleet)
 
-## 1. Professional Aerodynamics Engine
-- **Physics**: Constant Newtonian physics (F=ma).
-- **Moments**: Angular velocity and torque-based rotation.
-- **Damping**: Dynamic aerodynamic damping based on speed.
+## 1. Core Physics Engine
+- **Newtonian Physics**: Vector-based force summation (F=ma).
+- **Advanced Moments**: Torque-based rotation with aerodynamic damping.
+- **Directional Stability**: Real-time heading alignment (Weather-vaning).
+- **G-Force Limiter**: Enforced between -9G and +10G.
 
-## 2. Structural & Human Limits (G-Force)
-- **Range**: -9.0G to +10.0G.
-- **Control Clamping**: Enforced to prevent airframe failure.
+## 2. Aircraft Fleet (Local GLB Models)
+### F-35A Lightning II
+- **File**: `/f35.glb` | **Scale**: 20 | **CamDist**: 80m
+- **Role**: Standard Stealth Fighter.
 
-## 3. Aircraft Fleet (Realistic Models)
-### F-35 Lightning II (Stealth Jet)
-- **Source**: Hugging Face / cutechicken
-- **Mass**: 18,000 kg | Thrust: 191 kN
-- **Inertia**: Low | Handling: Extreme agility.
+### F-16 Fighting Falcon (New)
+- **File**: `/f16.glb` | **Scale**: 0.05 | **CamDist**: 70m
+- **Role**: High Agility Interceptor.
 
-### F-16 Fighting Falcon (Agile Jet)
-- **Source**: GitHub / ThreeFlightSimulator
-- **Mass**: 12,000 kg | Thrust: 127 kN
-- **Inertia**: Very Low | Handling: Superior roll rate.
+### Aerobatic Stunt Plane (New)
+- **File**: `/stunt.glb` | **Scale**: 8 | **CamDist**: 50m
+- **Role**: Light maneuverability, High roll rate.
 
-### Supermarine Spitfire (WW2 Propeller)
-- **Source**: BabylonJS Assets
-- **Mass**: 3,000 kg | Thrust: 25,000 N (Propeller equivalent)
-- **Inertia**: Minimal | Handling: High maneuverability at low speeds.
+### 747 Airliner
+- **File**: `/airplane.glb` | **Scale**: 0.8 | **CamDist**: 350m
+- **Role**: Heavy Scale Transport.
 
-### Airbus A380 (Super-Heavy Airliner)
-- **Source**: Khronos Sample Assets
-- **Mass**: 560,000 kg | Thrust: 1,200,000 N
-- **Inertia**: Extreme | Handling: Very slow response, massive stability.
-
-## 4. Visual & UI
-- **Selection UI**: Visual aircraft cards with specs.
-- **Camera**: Dynamic chase cam with aircraft-specific distance and height.
-- **Terrain**: Optimized Natural World v3.0.
+## 3. Visual & UI
+- **Selection UI**: 4 distinctive aircraft cards.
+- **Loading Screen**: Animation-based system booting UI.
+- **Environment**: NATURAL WORLD v3.0 (Daylight sky, ocean, mountains).
+- **Rendering**: Optimized near/far planes to prevent flickering.
