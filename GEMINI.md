@@ -7,15 +7,13 @@
 - **`help`**: Gemini CLI의 기본 도움말과 사용 가능한 스킬 목록을 확인합니다.
 - **`git pull`**: 다른 기기에서 작업 후 최신 상태를 불러올 때 사용합니다.
 
-## 🌟 Last Session Highlights (2026-04-27)
-- **Scheduler v2 (v2.5.2):**
-    - [기능] 월 80시간 한도 자동 조정 시스템 도입 (안내창 없는 실시간 반영).
-    - [기능] 일별 근로시간 0~8시간 강제 제한 및 시각적 피드백(Adjusted/Limit) 추가.
-    - [안정화] Firestore `hasPendingWrites` 적용으로 입력 중 UI 튕김 현상 원천 해결.
-    - [UI] 헤더 표시 정보를 사용자 아이디에서 전체 이메일 주소로 변경.
+## 🌟 Last Session Highlights (2026-04-28)
+- **Scheduler v2 (v2.5.3):**
+    - [버그수정] 월 80시간 한도 자동 조정 로직 개선 (연대기순 계산 방식 도입).
+    - 특정 날짜 수정 시 미래의 스케줄이 합산되어 입력값이 깎이던 현상 근본적 해결.
+    - [안정화] Firestore `hasPendingWrites` 적용으로 입력 중 UI 튕김 현상 해결 확인.
 - **Agent Intelligence:**
-    - `generalist` 및 `codebase_investigator` 에이전트를 통한 로직 교차 검증 및 시스템 취약점 진단 완료.
-    - `pro-dev-toolkit` 기반의 고성능 Firebase 동기화 패턴 적용.
+    - `getAdjustedHours` 함수를 수정하여 해당 날짜 이전의 근무 시간만 한도에 포함하도록 최적화.
 
 ## 📂 Active Projects
 1. Scheduler v2 (Next.js + Firebase) - [완료/고도화]
