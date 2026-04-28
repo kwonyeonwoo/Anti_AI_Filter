@@ -78,7 +78,7 @@ const FlightEngine = ({ aircraftType, setTelemetry }: any) => {
   const airplaneRef = useRef<THREE.Group>(null);
   const pos = useRef(new THREE.Vector3(0, 2000, 0));
   const quat = useRef(new THREE.Quaternion());
-  const vel = useRef(new THREE.Vector3(0, 0, -180)); 
+  const velBody = useRef(new THREE.Vector3(0, 0, -180)); // Local Body Velocity
   const angularVel = useRef(new THREE.Vector3(0, 0, 0));
   const throttle = useRef(0.7); 
 
@@ -96,64 +96,110 @@ const FlightEngine = ({ aircraftType, setTelemetry }: any) => {
   useFrame((_state, delta) => {
     if (delta > 0.1) return;
 
+    // 1. Controls
     if (keys.current['shift']) throttle.current = Math.min(1.0, throttle.current + 0.5 * delta);
     if (keys.current['ctrl']) throttle.current = Math.max(0.0, throttle.current - 0.5 * delta);
 
-    const pitchTarget = (keys.current['s'] ? 1.6 : (keys.current['w'] ? -1.6 : 0));
-    const rollTarget = (keys.current['a'] ? 2.8 : (keys.current['d'] ? -2.8 : 0));
+    const elevator = (keys.current['s'] ? 1.0 : (keys.current['w'] ? -1.0 : 0));
+    const aileron = (keys.current['a'] ? 1.0 : (keys.current['d'] ? -1.0 : 0));
+    const rudder = (keys.current['q'] ? 1.0 : (keys.current['e'] ? -1.0 : 0));
 
-    const currentSpeed = vel.current.length();
-    const dynamicPressure = 0.5 * SEA_LEVEL_DENSITY * currentSpeed * currentSpeed;
+    // 2. Atmospheric Model (Density decreases with altitude)
+    const altitude = pos.current.y;
+    const rho = SEA_LEVEL_DENSITY * Math.pow(1 - 0.0000225577 * altitude, 4.25588);
+    const speed = velBody.current.length();
+    const dynamicPressure = 0.5 * rho * speed * speed;
 
-    // --- Physically Tuned Rotational Inertia ---
-    const inertiaFactor = Math.max(1.0, specs.mass / 20000); 
-    const damping = 3.5 * (currentSpeed / 200); 
+    // 3. Aerodynamics Calculation (Local Body Frame)
+    // Angles of Attack and Sideslip
+    const alpha = speed > 1 ? Math.atan2(velBody.current.y, -velBody.current.z) : 0;
+    const beta = speed > 1 ? Math.asin(velBody.current.x / speed) : 0;
+
+    // Lift and Drag Coefficients
+    // Simplified stall model: lift drops after 15 degrees (0.26 rad)
+    const liftCoeff = specs.liftSlope * alpha * Math.exp(-Math.pow(alpha/0.3, 4));
+    const dragCoeff = specs.cd0 + (liftCoeff * liftCoeff) / (Math.PI * 3.0); // Induced drag
+
+    // Forces (Wind to Body Frame approx)
+    const lift = liftCoeff * dynamicPressure * specs.wingArea;
+    const drag = dragCoeff * dynamicPressure * specs.wingArea;
+    const sideForce = -0.5 * dynamicPressure * specs.wingArea * beta;
+
+    // 4. Moments (Torque)
+    // Damping factors based on speed and air density
+    const dampingBase = dynamicPressure * specs.wingArea * delta;
+    const pitchMoment = (elevator * 1.5 - angularVel.current.x * 2.0) * dampingBase;
+    const rollMoment = (aileron * 2.5 - angularVel.current.z * 1.5) * dampingBase;
+    const yawMoment = (rudder * 0.8 - angularVel.current.y * 1.0) * dampingBase;
+
+    // Apply Angular Accelerations (Simplified I)
+    const inertia = specs.mass * 0.5; 
+    angularVel.current.x += pitchMoment / inertia;
+    angularVel.current.y += yawMoment / (inertia * 1.5);
+    angularVel.current.z += rollMoment / (inertia * 0.5);
+
+    // Damping (Natural decay)
+    angularVel.current.multiplyScalar(0.98);
+
+    // 5. Integration (Linear)
+    const thrust = throttle.current * specs.thrust;
+    const gravityWorld = new THREE.Vector3(0, -specs.mass * G_ACCEL, 0);
+    const gravityBody = gravityWorld.clone().applyQuaternion(quat.current.clone().invert());
+
+    const totalForceBody = new THREE.Vector3(
+      sideForce,
+      lift - gravityBody.y, // Net Vertical
+      -drag + thrust + gravityBody.z // Net Longitudinal (-Z is forward)
+    );
     
-    // Pitch/Roll 가속 및 최대 회전 속도 제한 (Clamping)
-    const maxPitchRate = 1.8; // 초당 최대 Pitch 회전량 (라디안)
-    const maxRollRate = 2.5;  // 초당 최대 Roll 회전량 (라디안)
+    // We add gravity in world frame later or use body frame
+    const accelBody = totalForceBody.divideScalar(specs.mass);
+    velBody.current.add(accelBody.multiplyScalar(delta));
 
-    angularVel.current.x = THREE.MathUtils.clamp(
-      angularVel.current.x + (pitchTarget * 5.0 - angularVel.current.x * damping) * delta / inertiaFactor,
-      -maxPitchRate, maxPitchRate
-    );
-    angularVel.current.z = THREE.MathUtils.clamp(
-      angularVel.current.z + (rollTarget * 7.5 - angularVel.current.z * damping) * delta / inertiaFactor,
-      -maxRollRate, maxRollRate
-    );
+    // Limit side slip (weathervane effect)
+    velBody.current.x *= 0.95; 
 
-    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(angularVel.current.x * delta, 0, angularVel.current.z * delta));
+    // Update Orientation
+    const qDelta = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+      angularVel.current.x * delta,
+      angularVel.current.y * delta,
+      angularVel.current.z * delta
+    ));
     quat.current.multiply(qDelta).normalize();
 
-    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(quat.current).normalize();
-    const upVec = new THREE.Vector3(0, 1, 0).applyQuaternion(quat.current).normalize();
-    const velNorm = vel.current.clone().normalize();
+    // Transform velocity to world frame for position update
+    const velWorld = velBody.current.clone().applyQuaternion(quat.current);
+    pos.current.add(velWorld.multiplyScalar(delta));
 
-    const thrust = forward.clone().multiplyScalar(throttle.current * specs.thrust);
-    const gravity = new THREE.Vector3(0, -specs.mass * G_ACCEL, 0);
-    const aoa = -velNorm.dot(upVec);
-    const liftCoeff = THREE.MathUtils.clamp(0.45 + aoa * specs.liftSlope, -0.9, 1.8);
-    const lift = upVec.clone().multiplyScalar(dynamicPressure * specs.wingArea * liftCoeff);
-    const drag = velNorm.clone().multiplyScalar(-(dynamicPressure * specs.wingArea * (specs.cd0 + (liftCoeff**2 / 20))));
-
-    const acc = new THREE.Vector3().add(thrust).add(gravity).add(lift).add(drag).divideScalar(specs.mass);
-    vel.current.add(acc.multiplyScalar(delta));
-    vel.current.lerp(forward.clone().multiplyScalar(currentSpeed), 2.5 * delta); 
-
-    pos.current.add(vel.current.clone().multiplyScalar(delta));
-    if (pos.current.y < 20) { pos.current.y = 20; vel.current.y = 0; }
+    // Ground Collision
+    if (pos.current.y < 20) {
+      pos.current.y = 20;
+      velBody.current.y = Math.max(0, velBody.current.y);
+      if (speed < 50) {
+          angularVel.current.set(0,0,0);
+          velBody.current.set(0,0,0);
+      }
+    }
 
     if (airplaneRef.current) {
       airplaneRef.current.position.copy(pos.current);
       airplaneRef.current.quaternion.copy(quat.current);
     }
 
-    camera.position.lerp(pos.current.clone().add(new THREE.Vector3(0, specs.camHeight, specs.camDist).applyQuaternion(quat.current)), 0.15);
+    // Camera follow logic
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(quat.current);
+    const upVec = new THREE.Vector3(0, 1, 0).applyQuaternion(quat.current);
+    camera.position.lerp(pos.current.clone().add(new THREE.Vector3(0, specs.camHeight, specs.camDist).applyQuaternion(quat.current)), 0.1);
     camera.up.copy(upVec);
     camera.lookAt(pos.current.clone().add(forward.clone().multiplyScalar(500)));
 
     if (_state.clock.elapsedTime % 0.1 < 0.02) {
-      setTelemetry({ speed: Math.round(currentSpeed * 3.6), alt: Math.round(pos.current.y), thr: Math.round(throttle.current * 100), g: Math.round((lift.length() / (specs.mass * G_ACCEL)) * 10) / 10 });
+      setTelemetry({ 
+        speed: Math.round(speed * 3.6), 
+        alt: Math.round(pos.current.y), 
+        thr: Math.round(throttle.current * 100), 
+        g: Math.round((lift / (specs.mass * G_ACCEL)) * 10) / 10 
+      });
     }
   });
 
