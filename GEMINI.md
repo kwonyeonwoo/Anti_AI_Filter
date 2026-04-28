@@ -25,5 +25,10 @@
 - **Notification:** Windows Toast Notification 연동됨.
 
 ## 💡 Machine-to-Machine Sync Instructions
-1. 다른 기기에서 `git pull` 후 `/skills reload`를 실행하십시오.
-2. 모든 보안 지침과 동기화 로직이 즉시 활성화됩니다.
+1. **신규 기기 최초 설정:** 빈 폴더에서 아래 두 줄을 입력하세요.
+   ```powershell
+   git clone https://github.com/kwonyeonwoo/Anti_AI_Filter.git .
+   powershell.exe -ExecutionPolicy Bypass -File ./setup_remote.ps1
+   ```
+2. **이후 자동화:** Gemini CLI를 켜면 세션 시작 시 자동 Pull, 작업 종료 시 자동 Push가 수행됩니다.
+3. **메모리 복구:** `/skills reload`를 실행하여 에이전트 규칙을 활성화하세요.
