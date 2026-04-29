@@ -1,0 +1,14 @@
+{
+  "name": "ai-performance-tracker",
+  "version": "1.0.0",
+  "scripts": {
+    "server": "node server/index.js",
+    "client": "npm run dev --prefix client",
+    "benchmark": "node auto_compare.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "proxy": "node proxy.js"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

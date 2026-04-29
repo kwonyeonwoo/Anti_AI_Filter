@@ -1,0 +1,30 @@
+{
+  "directories": [
+    {
+      "name": "Current_Workspace",
+      "path": "."
+    },
+    {
+      "name": "Desktop_Bench",
+      "path": "C:\\Users\\yeony\\Desktop\\gemini_bench"
+    }
+  ],
+  "models": ["gemini-1.5-flash", "gemini-1.5-pro"],
+  "prompts": [
+    { "text": "Explain React in one sentence.", "category": "General" },
+    { "text": "Write a hello world in Python.", "category": "Coding" },
+    { "text": "What is 2+2?", "category": "Logic" },
+    { "text": "How to handle errors in Express.js?", "category": "Coding" },
+    { "text": "What are the key benefits of using a performance tracker for LLMs?", "category": "General" }
+  ],
+  "evaluator": {
+    "enabled": true,
+    "model": "gemini",
+    "rubric": "Score from 0 to 100. Criteria: 1. Technical Accuracy (50%), 2. Clarity & Readability (30%), 3. Adherence to constraints (20%)."
+  },
+  "sla": {
+    "target_accuracy": 90,
+    "max_latency_ms": 10000,
+    "max_tokens": 500
+  }
+}
