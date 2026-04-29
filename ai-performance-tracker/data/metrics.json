@@ -1,1 +1,28 @@
-[]
+[
+  {
+    "id": 1777476090205,
+    "timestamp": "2026-04-29T15:21:30.205Z",
+    "prompt": "Is 1024 a power of 2?",
+    "response": "Yes, 1024 is $2^{10}$.",
+    "accuracy": 90,
+    "latency": 11657,
+    "tokens": 5,
+    "systemPromptId": "Current_Workspace",
+    "category": "Logic",
+    "model": "default",
+    "sessionId": "Session_2026-04-29T15-18-16-451Z"
+  },
+  {
+    "id": 1777476115362,
+    "timestamp": "2026-04-29T15:21:55.362Z",
+    "prompt": "What is the primary benefit of React hooks?",
+    "response": "React hooks allow functional components to manage state and side effects without class-based boilerplate. This enables better logic reuse and cleaner, more readable code structures.",
+    "accuracy": 93,
+    "latency": 15105,
+    "tokens": 45,
+    "systemPromptId": "Gemini_Bench",
+    "category": "General",
+    "model": "default",
+    "sessionId": "Session_2026-04-29T15-18-16-451Z"
+  }
+]

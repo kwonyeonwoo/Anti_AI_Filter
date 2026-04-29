@@ -5,17 +5,15 @@
       "path": "."
     },
     {
-      "name": "Desktop_Bench",
-      "path": "C:\\Users\\yeony\\Desktop\\gemini_bench"
+      "name": "Gemini_Bench",
+      "path": "./gemini-bench"
     }
   ],
-  "models": ["gemini-1.5-flash", "gemini-1.5-pro"],
+  "models": ["default"],
   "prompts": [
-    { "text": "Explain React in one sentence.", "category": "General" },
-    { "text": "Write a hello world in Python.", "category": "Coding" },
-    { "text": "What is 2+2?", "category": "Logic" },
-    { "text": "How to handle errors in Express.js?", "category": "Coding" },
-    { "text": "What are the key benefits of using a performance tracker for LLMs?", "category": "General" }
+    { "text": "What is the primary benefit of React hooks?", "category": "General" },
+    { "text": "Write a Python script to sort a list of numbers.", "category": "Coding" },
+    { "text": "Is 1024 a power of 2?", "category": "Logic" }
   ],
   "evaluator": {
     "enabled": true,
